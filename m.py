@@ -1,37 +1,30 @@
 import mouse
+#import pyautogui
 import socket 
 import time
 
 
 def left_mouse():
-    print('LEFT ', mouse.get_position())
+    pos = mouse.get_position()
+    message = str(pos[0]) + "," + str(pos[1])
+    print(message.encode('utf-8'), server)
+    s.sendto(message.encode('utf-8'), server)
 
 def Main():
+    global s, server
     myHostname = socket.gethostname()
     print("Name of the localhost is {}".format(myHostname))
 
-    host = myHostname
+    host = '192.168.69.112'
     port = 4005
 
-    server ('192.168.69.121', 4000)
+    server = ('192.168.69.121', 4000)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((host, port))
 
-    
+    mouse.on_click(left_mouse)
 
-#mouse.on_click(left_mouse)
-
-
-#vid=0x046d 
-#pid=0xc068
-
-#with hid.Device(vid, pid) as h:
-#   print(h.manufacturer)
-#    print(h.product)
-#    print(h.serial)
-#    print(h)
-    #h.set_raw_data_handler(readData)
 
     while True:
         #run forever
