@@ -1,12 +1,16 @@
 import socket
+import os
+from dotenv import load_dotenv
 from pynput import mouse 
+
+load_dotenv()
 
 def Main():
 
     controller = mouse.Controller()
    
-    host = '0.0.0.0' #Server ip
-    port = 4000
+    host = os.environ.get("HOST_IP") #Server ip
+    port = int(os.environ.get("HOST_PORT"))
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((host, port))

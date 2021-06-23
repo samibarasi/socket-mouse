@@ -1,6 +1,7 @@
 #import mouse
 #import pyautogui
 from pynput import mouse
+import os
 import socket 
 import time
 from dotenv import load_dotenv
@@ -29,10 +30,10 @@ def Main():
     myHostname = socket.gethostname()
     print("Name of the localhost is {}".format(myHostname))
 
-    host = '192.168.69.121'
+    host = os.environ.get("MY_IP")
     port = 4005
 
-    server = ('192.168.69.112', 4000)
+    server = (os.environ.get("HOST_IP"), int(os.environ.get("HOST_PORT")))
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((host, port))
