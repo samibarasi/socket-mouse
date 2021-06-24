@@ -5,8 +5,18 @@ import os
 import socket 
 import time
 from dotenv import load_dotenv
+from signal import signal, SIGINT
+from sys import exit
 
 load_dotenv()
+
+run_code = True
+
+def handler(signal_received, frame):
+    global run_code
+    # Handle any cleanup here
+    print('SIGINT or CTRL-C detected. Exiting gracefully')
+    run_code = False
 
 def left_mouse():
     #pos = mouse.get_position()
@@ -26,7 +36,7 @@ def on_click(x, y, button, pressed):
         s.sendto(message.encode('utf-8'), server)
 
 def Main():
-    global s, server
+    global s, server, run_code
     myHostname = socket.gethostname()
     print("Name of the localhost is {}".format(myHostname))
 
@@ -45,8 +55,9 @@ def Main():
             on_click=on_click) as listener:
         listener.join()
 
-
-    while True:
+    # TODO: code block below is not reached because of the
+    # mouse.Listener blocking 
+    while run_code:
         #run forever
         
         time.sleep(.1)
@@ -54,6 +65,9 @@ def Main():
         #print(mouse.get_position())
         #mouse.move(100, 100, absolute=True, duration=0.2)
         #mouse.click('right')
+    exit(0)
 
 if __name__ == '__main__':
+    # Tell Python to run the handler() function when SIGINT is received
+    signal(SIGINT, handler)
     Main()
