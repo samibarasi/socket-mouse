@@ -29,8 +29,12 @@ def Main(s):
         print("From connected client: " + str(event))
         controller.position = (event.get("X"), event.get("Y"))
         if (event.get("type") == 1025):
-            pass
-        controller.click(mouse.Button.left, 3)
+            # Need to send two clicks to get one. Is it a bug?
+            controller.click(mouse.Button.left, 2)
+        # TODO: add double click support
+        # TODO: add finger press and move support for painting and marking
+        # TODO: filter out ghost clicks
+
 
 if __name__=='__main__':
     run_code = True
