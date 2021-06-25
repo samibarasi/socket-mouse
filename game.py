@@ -18,18 +18,21 @@ textRect.center = (width // 2, height // 2)
 while 1:
     
     for event in pygame.event.get():
-        
         if event.type == pygame.QUIT: sys.exit()
         #or event.type == pygame.MOUSEMOTION
         if event.type == pygame.MOUSEBUTTONDOWN :
             pos = event.pos
             text = font.render(str(pos[0]) + ', ' + str(pos[1]) , True, green, blue)
             print(event.type, pygame.MOUSEBUTTONDOWN, pos)
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_f:
-            if screen.get_flags() & pygame.FULLSCREEN:
-                pygame.display.set_mode(size)
-            else:
-                pygame.display.set_mode(size, pygame.FULLSCREEN) 
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+               pygame.quit()
+               sys.exit()
+            if event.key == pygame.K_f:
+                if screen.get_flags() & pygame.FULLSCREEN:
+                    pygame.display.set_mode(size)
+                else:
+                    pygame.display.set_mode(size, pygame.FULLSCREEN) 
 
 
     screen.fill(black)
