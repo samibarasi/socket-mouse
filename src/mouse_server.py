@@ -34,8 +34,8 @@ def Main(s):
 
 if __name__=='__main__':
     run_code = True
-    host = os.environ.get("MY_IP") #Server ip
-    port = int(os.environ.get("HOST_PORT"))
+    host = os.environ.get("HOST_IP", '') #Server ip
+    port = int(os.environ.get("HOST_PORT", 4000))
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((host, port))
