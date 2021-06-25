@@ -30,10 +30,15 @@ print("My IP addresse is {}".format(s.getsockname()[0]))
 while 1:
     
     for event in pygame.event.get():
+        print(event)
         if event.type == pygame.QUIT: 
             s.close()
             sys.exit()
         #or event.type == pygame.MOUSEMOTION
+        # TODO: add Mouse Motion
+        # TODO: add Mouse Button Up
+        # TODO: add Double Click 
+        # TODO: add Mouse Motion with Button Down  
         if event.type == pygame.MOUSEBUTTONDOWN :
             posX, posY = event.pos
             text = font.render(str(posX) + ', ' + str(posY) , True, green, blue)
