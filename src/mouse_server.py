@@ -1,5 +1,6 @@
 import socket
 import os
+import json
 from dotenv import load_dotenv
 from pynput import mouse
 from signal import signal, SIGINT
@@ -21,12 +22,15 @@ def Main(s):
     while True:
         data, addr = s.recvfrom(1024)
         data = data.decode('utf-8')
-        pos = posX, posY, type = tuple(map(int, data.split(',')))
+        #pos = type, posX, posY = tuple(map(int, data.split(',')))
+        print("Raw data", data)
+        event = json.loads(data)
         print("Message from: " + str(addr))
-        print("From connected client: " + str(pos))
-        controller.position = (pos[0], pos[1])
-        if (type == 1025):
-            controller.click(mouse.Button.left)
+        print("From connected client: " + str(event))
+        controller.position = (event.get("X"), event.get("Y"))
+        if (event.get("type") == 1025):
+            pass
+        controller.click(mouse.Button.left, 3)
 
 if __name__=='__main__':
     run_code = True
