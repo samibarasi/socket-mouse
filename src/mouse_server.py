@@ -8,6 +8,8 @@ from multiprocessing import Process
 
 load_dotenv()
 
+mouse.Events.
+
 def handler(signal_received, frame):
     global run_code
     # Handle any cleanup here
