@@ -8,8 +8,6 @@ from multiprocessing import Process
 
 load_dotenv()
 
-mouse.Events.
-
 def handler(signal_received, frame):
     global run_code
     # Handle any cleanup here
@@ -23,10 +21,12 @@ def Main(s):
     while True:
         data, addr = s.recvfrom(1024)
         data = data.decode('utf-8')
-        pos = tuple(map(int, data.split(',')))
+        pos = posX, posY, type = tuple(map(int, data.split(',')))
         print("Message from: " + str(addr))
         print("From connected client: " + str(pos))
         controller.position = (pos[0], pos[1])
+        if (type == 1025):
+            controller.click(mouse.Button.left)
 
 if __name__=='__main__':
     run_code = True
