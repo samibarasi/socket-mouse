@@ -1,6 +1,6 @@
 var Mouse = require("node-mouse");
 
-var m = new Mouse(2);
+var m = new Mouse();
 
 m.on("mousedown", function(event) {
     console.log(event)
