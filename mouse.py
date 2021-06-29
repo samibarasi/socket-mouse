@@ -10,7 +10,7 @@ seconds_duration = 5
 
 def helperFunc(item):
     #print(item)
-    return True if item.startswith("tty") else False
+    return True if item.startswith("mouse2") else False
 
 def handler(signal_received, frame):
     global run_code
@@ -29,6 +29,7 @@ def Main(filename):
 
         (type,code,value) =  struct.unpack_from('hhi', byte, offset=8)
 
+        print(type, code, value)
         if type == 1 and value == 1:
             if code == 272:
                 print("LEFT PRESS")
@@ -43,12 +44,13 @@ def Main(filename):
        
 if __name__ == '__main__':
     run_code = True
-    files = list(filter(helperFunc, os.listdir("/dev")))
+    files = list(filter(helperFunc, os.listdir("/dev/input")))
+
     now = datetime.datetime.now()
     finish_time = now + datetime.timedelta(seconds=seconds_duration)
         # Tell Python to run the handler() function when SIGINT is recieved
     signal(SIGINT, handler)
-    filename = "/dev/{}".format(files.pop(0))
+    filename = "/dev/input/{}".format(files.pop(0))
     program = Process(target=Main, args=(filename,))
     program.start()
     while run_code:
@@ -59,7 +61,7 @@ if __name__ == '__main__':
                 print("done.")
                 exit(0)
                 
-            filename = "/dev/{}".format(files.pop(0))
+            filename = "/dev/input/{}".format(files.pop(0))
             program = Process(target=Main, args=(filename,))
             program.start()
             finish_time = now + datetime.timedelta(seconds=seconds_duration)
