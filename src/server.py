@@ -58,5 +58,5 @@ if __name__=='__main__':
         pass
     
     # Clean up
+    program.terminate()
     s.close()
-    program.terminate();
