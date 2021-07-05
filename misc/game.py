@@ -2,11 +2,8 @@ import sys, pygame
 import pygame._sdl2 as sdl2
 import pygame._sdl2.touch as touch
 pygame.init()
-print("number of touch devices", touch.get_num_devices())
-is_capture = 0  # zero to request playback devices, non-zero to request recording devices
-num = sdl2.get_num_audio_devices(is_capture)
-names = [str(sdl2.get_audio_device_name(i, is_capture), encoding="utf-8") for i in range(num)]
-print("\n".join(names))
+print("number of touch devices:s", touch.get_num_devices())
+
 size = width, height = 1280,800
 flags = pygame.NOFRAME | pygame.FULLSCREEN
 black = 0, 0, 0
