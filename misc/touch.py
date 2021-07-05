@@ -1,8 +1,11 @@
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.core.window import Window
-
+Window.size = (1280, 800)
+#Window.borderless = True
 Window.fullscreen = True
+print(Window.width, Window.height)
+
 
 class TouchInput(Widget):
 

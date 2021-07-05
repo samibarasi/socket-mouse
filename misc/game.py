@@ -3,7 +3,6 @@ import pygame._sdl2 as sdl2
 import pygame._sdl2.touch as touch
 pygame.init()
 print("number of touch devices:s", touch.get_num_devices())
-
 size = width, height = 1280,800
 flags = pygame.NOFRAME | pygame.FULLSCREEN
 black = 0, 0, 0
@@ -28,6 +27,14 @@ while 1:
             pos = event.pos
             text = font.render(str(pos[0]) + ', ' + str(pos[1]) , True, green, blue)
             print(event.type, pygame.MOUSEBUTTONDOWN, pos)
+
+        if event.type == pygame.MOUSEWHEEL:
+               print(event)
+               print(event.x, event.y)
+               print(event.flipped)
+               print(event.which)
+               # can access properties with
+               # proper notation(ex: event.y)
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                pygame.quit()
