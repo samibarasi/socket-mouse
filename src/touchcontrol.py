@@ -4,10 +4,14 @@ from evdev import InputDevice, util, ecodes as e
 from selectors import DefaultSelector, EVENT_READ
 import serial
 
-def send_event(touch, finger, x, y):
+def send_event(num, touch, finger, x, y):
     real_x = round(10000 / 0x7FFF * x)
     real_y = round(10000 / 0x7FFF * y)
-    string = "{},{},{},{}\n".format(touch, finger, real_x, real_y)
+    width = 10000 / monitors
+    #width = 10000 / len(input_devices)
+    xx = round(real_x / monitors + (width * num))
+
+    string = "{},{},{},{}\n".format(touch, finger, xx, real_y)
     ser.write(string.encode())
     print(string)
 
@@ -15,12 +19,19 @@ def send_event(touch, finger, x, y):
 if __name__ == '__main__':
 
     mixed_events = False
+    monitors = 4
+    threshold = 0.02
+
+    deadzone_left = round(0x7FFF * threshold)
+    deadzone_right = 0x7FFF - deadzone_left
 
     ser = serial.Serial('/dev/ttyUSB0', 115200)
 
 
     input_devices = [
-        '/dev/input/by-path/pci-0000:00:14.0-usb-0:3.3:1.0-event'
+            '/dev/input/by-path/pci-0000:00:14.0-usb-0:2.3:1.3-event',
+            '/dev/input/by-path/pci-0000:00:14.0-usb-0:4.3:1.2-event',
+            '/dev/input/by-path/pci-0000:00:14.0-usb-0:3.3:1.3-event'
     ]
 
     selector = DefaultSelector()
@@ -56,7 +67,8 @@ if __name__ == '__main__':
 
                 if event.type == e.EV_SYN and event.code == e.SYN_REPORT:
                     for k, v in list(state[num]['slots'].items()):
-                        send_event(v['touch'], k, v['x'], v['y'])
+                        if (v['x'] > 0 and v['y'] > 0):
+                            send_event(num, v['touch'], k, v['x'], v['y'])
                         if v['touch'] == 0:
                             del(state[num]['slots'][k])
                 
@@ -70,7 +82,10 @@ if __name__ == '__main__':
                         state[num]['slots'][c] = {'touch': 0, 'x': 0, 'y': 0}
 
                 elif event.code == e.ABS_MT_POSITION_X:
-                    state[num]['slots'][c]['x'] = event.value
+                    if event.value > deadzone_left or event.value < deadzone_right:
+                        state[num]['slots'][c]['x'] = event.value
+                    else:
+                        print("Ghosttouch X:{}".format(event.value))
 
                 elif event.code == e.ABS_MT_POSITION_Y:
                     state[num]['slots'][c]['y'] = event.value

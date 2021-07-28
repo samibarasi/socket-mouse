@@ -14,15 +14,15 @@ print("Connected to host: {0} on port {1}".format(host, port))
 print("My IP addresse is {}".format(s.getsockname()[0]))
 
 selector = DefaultSelector()
-dev1 = InputDevice('/dev/input/by-path/pci-0000:00:14.0-usb-0:4.3:1.3-event')
-dev2 = InputDevice('/dev/input/by-path/pci-0000:00:14.0-usb-0:3.3:1.3-event')
-dev3 = InputDevice('/dev/input/by-path/pci-0000:00:14.0-usb-0:1.3:1.3-event')
-#dev3 = InputDevice('/dev/input/event11')
+#dev1 = InputDevice('/dev/input/by-path/pci-0000:00:14.0-usb-0:1.3:1.3-event')
+dev2 = InputDevice('/dev/input/by-path/pci-0000:00:14.0-usb-0:2.3:1.3-event')
+#dev3 = InputDevice('/dev/input/by-path/pci-0000:00:14.0-usb-0:3.3:1.3-event')
+#dev4 = InputDevice('/dev/input/by-path/pci-0000:00:14.0-usb-0:4.3:1.3-event')
 
 # This works because InputDevice has a `fileno()` method.
 selector.register(dev1, EVENT_READ, 0)
-selector.register(dev2, EVENT_READ, 1)
-selector.register(dev3, EVENT_READ, 2)
+#selector.register(dev2, EVENT_READ, 1)
+#selector.register(dev3, EVENT_READ, 2)
 #selector.register(dev4, EVENT_READ, 4)
 
 while True:
