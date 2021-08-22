@@ -9,6 +9,9 @@ from multiprocessing import Process
 
 load_dotenv()
 
+size = width, height = 1280, 800
+MAX = 32500
+
 def handler(signal_received, frame):
     global run_code
     # Handle any cleanup here
@@ -27,10 +30,15 @@ def Main(s):
         event = json.loads(data)
         print("Message from: " + str(addr))
         print("From connected client: " + str(event))
-        controller.position = (event.get("X"), event.get("Y"))
-        if (event.get("type") == 1025):
+        if event.get("code") == 0:
+            posX = event.get("value") / MAX * width + width * event.get("num")
+        if event.get("code") == 1:
+            posY = event.get("value") / MAX * height
+            print("set position {:f} x {:f}".format(posX, posY))
+            controller.position = (posX, posY)
+        if event.get("code") == 330 and event.get("type") == 1 and event.get("value") == 0:
             # Need to send two clicks to get one. Is it a bug?
-            controller.click(mouse.Button.left, 2)
+            controller.click(mouse.Button.left, 1)
         # TODO: add double click support
         # TODO: add finger press and move support for painting and marking
         # TODO: filter out ghost clicks
