@@ -32,3 +32,6 @@ with keyboard.Events() as events:
                 timestamp = time.time()
                 print('Received event {}'.format(event))
                 print('KeyMemo {}'.format(keymemo))
+
+# Open chrome in kiosk mode: "C:\Program Files\Google\Chrome\Application\chrome.exe" -kiosk http://praxistipps.chip.de/ --overscroll-history-navigation=0
+# or "C:\Program Files\Google\Chrome\Application\chrome.exe" -kiosk http://praxistipps.chip.de/ --overscroll-history-navigation=0
