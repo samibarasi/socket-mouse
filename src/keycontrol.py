@@ -2,15 +2,15 @@ from pynput import keyboard
 import time
 from subprocess import Popen
 
-def checkMemo(str):
-    print("store: {}".format(str))
+def checkMemorizedKeys(str):
+    #print("store: {}".format(str))
     switcher = {
         "abc": "http://barasi.gmbh",
         "cde": "http://nelsen-consulting.de"
     }
     return switcher.get(str, "")
 
-def openMemo(url):
+def openURL(url):
     global proc
 
     # Check if Chrome is still running and if yes, kill it :-D
@@ -29,9 +29,6 @@ if __name__ == "__main__":
     # Open Chrome with default Page e.g. _blank
     proc = Popen(["C:\Program Files\Google\Chrome\Application\chrome.exe", "-kiosk", "about:blank"])
 
-    #print("Timestamp: {}".format(timestamp))
-    #print("Timestamp: {}".format(int(timestamp)))
-
     # The event listener will be running in this block
     with keyboard.Events() as events:
         for event in events:
@@ -45,7 +42,7 @@ if __name__ == "__main__":
                     pass
                 
                 # Build string from key memory and check if it's a known one.
-                memo = checkMemo("".join(str(i) for i in keymemo))
+                memo = checkMemorizedKeys("".join(str(i) for i in keymemo))
 
                 timestamp = time.time()
                 #print('Received event {}'.format(event))
@@ -53,6 +50,6 @@ if __name__ == "__main__":
 
                 # if memo is not empty open url in chrome, reset memo and clear key memory
                 if memo:
-                    openMemo(memo)
+                    openURL(memo)
                     keymemo.clear()
                     memo = ""
