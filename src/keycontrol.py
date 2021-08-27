@@ -1,37 +1,58 @@
 from pynput import keyboard
 import time
-
-timestamp = time.time()
-keymemo = []
-
-print("Timestamp: {}".format(timestamp))
-print("Timestamp: {}".format(int(timestamp)))
+from subprocess import Popen
 
 def checkMemo(str):
-    print(str)
+    print("store: {}".format(str))
     switcher = {
-        "abc": "ABC",
-        "cde": "CDE"
+        "abc": "http://barasi.gmbh",
+        "cde": "http://nelsen-consulting.de"
     }
     return switcher.get(str, "")
 
-# The event listener will be running in this block
-with keyboard.Events() as events:
-    for event in events:
-        if timestamp + 5 < time.time():
-            keymemo.clear()
-        if isinstance(event, keyboard.Events.Press):
-            if event.key == keyboard.Key.esc:
-                break
-            else:
+def openMemo(url):
+    global proc
+
+    # Check if Chrome is still running and if yes, kill it :-D
+    if proc.poll() is None:
+        proc.terminate()
+
+    # Open URL in Chrome
+    proc = Popen(["C:\Program Files\Google\Chrome\Application\chrome.exe", "-kiosk", url])
+
+if __name__ == "__main__":
+    # initialize
+    timeout = 2
+    timestamp = time.time()
+    keymemo = []
+
+    # Open Chrome with default Page e.g. _blank
+    proc = Popen(["C:\Program Files\Google\Chrome\Application\chrome.exe", "-kiosk", "about:blank"])
+
+    #print("Timestamp: {}".format(timestamp))
+    #print("Timestamp: {}".format(int(timestamp)))
+
+    # The event listener will be running in this block
+    with keyboard.Events() as events:
+        for event in events:
+            if timestamp + timeout < time.time():
+                keymemo.clear()
+            if isinstance(event, keyboard.Events.Press):
+                # Append pressed key to key memory
                 try:
                     keymemo.append(event.key.char)
                 except AttributeError:
                     pass
-                print(checkMemo("".join(str(i) for i in keymemo)))
-                timestamp = time.time()
-                print('Received event {}'.format(event))
-                print('KeyMemo {}'.format(keymemo))
+                
+                # Build string from key memory and check if it's a known one.
+                memo = checkMemo("".join(str(i) for i in keymemo))
 
-# Open chrome in kiosk mode: "C:\Program Files\Google\Chrome\Application\chrome.exe" -kiosk http://praxistipps.chip.de/ --overscroll-history-navigation=0
-# or "C:\Program Files\Google\Chrome\Application\chrome.exe" -kiosk http://praxistipps.chip.de/ --overscroll-history-navigation=0
+                timestamp = time.time()
+                #print('Received event {}'.format(event))
+                #print('KeyMemo {}'.format(keymemo))
+
+                # if memo is not empty open url in chrome, reset memo and clear key memory
+                if memo:
+                    openMemo(memo)
+                    keymemo.clear()
+                    memo = ""
