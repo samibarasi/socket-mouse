@@ -40,7 +40,7 @@ if __name__ == "__main__":
                     keymemo.append(event.key.char)
                 except AttributeError:
                     pass
-                
+
                 # Build string from key memory and check if it's a known one.
                 memo = checkMemorizedKeys("".join(str(i) for i in keymemo))
 
