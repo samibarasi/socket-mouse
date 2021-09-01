@@ -3,7 +3,7 @@ import time
 from subprocess import Popen
 
 def checkMemorizedKeys(str):
-    #print("store: {}".format(str))
+    print("store: {}".format(str))
     switcher = {
         "abc": "http://barasi.gmbh",
         "cde": "http://nelsen-consulting.de"
