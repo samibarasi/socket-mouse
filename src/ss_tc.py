@@ -10,13 +10,13 @@ from pprint import pprint
 
 load_dotenv()
 
-width, height = 2560, 1440
-MAX = 10000
-
 from ctypes import *
 from ctypes.wintypes import *
 
 #Constants
+
+# For touch screen values
+MAX = 10000
 
 #For touchMask
 TOUCH_MASK_NONE=          0x00000000 #Default
@@ -147,7 +147,7 @@ def handler(signal_received, frame):
         print('SIGINT or CTRL-C detected. Exiting gracefully')
         run_code = False
 
-def Main(s):
+def Main(s, width, height):
     #controller = mouse.Controller()
      # Query DPI Awareness (Windows 10 and 8)
     windll.shcore.SetProcessDpiAwareness(2)
@@ -175,17 +175,20 @@ def Main(s):
 
         # TODO: add double click support
         # TODO: add finger press and move support for painting and marking
+        # TODO: add multi touch support
 
 
 if __name__=='__main__':
     run_code = True
+    width = windll.user32.GetSystemMetrics(78)
+    height = windll.user32.GetSystemMetrics(79)
     host = os.environ.get("HOST_IP", '') #Server ip
     port = int(os.environ.get("HOST_PORT", 4000))
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((host, port))
     
-    program = Process(target=Main, args=(s,))
+    program = Process(target=Main, args=(s, width, height))
     # Tell Python to run the handler() function when SIGINT is recieved
     signal(SIGINT, handler)
     print('Running. Press CTRL-C to exit.')
