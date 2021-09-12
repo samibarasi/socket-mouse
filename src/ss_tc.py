@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+
+import socket
+import os
+from dotenv import load_dotenv
+from pynput import mouse
+from signal import signal, SIGINT
+from multiprocessing import Process
+from pprint import pprint
+
+load_dotenv()
+
+width, height = 2560, 1440
+MAX = 10000
+
 from ctypes import *
 from ctypes.wintypes import *
 
@@ -77,7 +92,7 @@ class POINTER_TOUCH_INFO(Structure):
 
 pointerInfo=POINTER_INFO(pointerType=PT_TOUCH,
                          pointerId=0,
-                         ptPixelLocation=POINT(950,540))
+                         ptPixelLocation=POINT(1280,720))
 
 touchInfo=POINTER_TOUCH_INFO(pointerInfo=pointerInfo,
                              touchFlags=TOUCH_FLAG_NONE,
@@ -86,8 +101,8 @@ touchInfo=POINTER_TOUCH_INFO(pointerInfo=pointerInfo,
                                   pointerInfo.ptPixelLocation.y-5,
                                   pointerInfo.ptPixelLocation.x+5,
                                   pointerInfo.ptPixelLocation.y+5),
-                             orientation=0,
-                             pressure=1024)
+                             orientation=90,
+                             pressure=32000)
 
 
 def makeTouch(x,y,fingerRadius):
@@ -114,7 +129,7 @@ def makeTouch(x,y,fingerRadius):
     else:
         print("Touch Down Succeeded!")
 
-    #Pull Up
+    #Pull Upcc
     touchInfo.pointerInfo.pointerFlags=POINTER_FLAG_UP
 
     if (windll.user32.InjectTouchInput(1,byref(touchInfo))==0):
@@ -125,5 +140,64 @@ def makeTouch(x,y,fingerRadius):
 
     return
 
-#Ex:
-makeTouch(640,1439,5)
+def handler(signal_received, frame):
+    global run_code
+    # Handle any cleanup here
+    if signal_received == SIGINT:
+        print('SIGINT or CTRL-C detected. Exiting gracefully')
+        run_code = False
+
+def Main(s):
+    #controller = mouse.Controller()
+     # Query DPI Awareness (Windows 10 and 8)
+    windll.shcore.SetProcessDpiAwareness(2)
+    awareness = c_int()
+    errorCode = windll.shcore.GetProcessDpiAwareness(0, byref(awareness))
+    print("DPI Awareness: ", awareness.value)
+
+    while True:
+         # reveive data from socket connection
+        data, addr = s.recvfrom(1024)
+        data = data.decode('utf-8')
+        event = tuple(map(int, data.split(',')))
+        print("Raw data", data)
+        print("Message from: " + str(addr))
+        print("From connected client: " + str(event))
+        touch = event[0]
+        posX = int(width / MAX * event[2])
+        posY = int(height / MAX * event[3])
+        #controller.position = (posX, posY)
+        if touch == 0:
+            # on touchup (release)
+            print(posX, posY, 5)
+            makeTouch(posX, posY, 5)
+            #controller.click(mouse.Button.left, 1)
+
+        # TODO: add double click support
+        # TODO: add finger press and move support for painting and marking
+
+
+if __name__=='__main__':
+    run_code = True
+    host = os.environ.get("HOST_IP", '') #Server ip
+    port = int(os.environ.get("HOST_PORT", 4000))
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.bind((host, port))
+    
+    program = Process(target=Main, args=(s,))
+    # Tell Python to run the handler() function when SIGINT is recieved
+    signal(SIGINT, handler)
+    print('Running. Press CTRL-C to exit.')
+
+    # Start Main
+    program.start()
+    print("Server start listening on {0} and port {1}".format(host, port))
+
+    while run_code:
+        # run forever
+        pass
+    
+    # Clean up
+    program.terminate()
+    s.close()
