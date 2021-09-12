@@ -29,14 +29,13 @@ if __name__ == '__main__':
 
 
     input_devices = [
+            '/dev/input/by-path/pci-0000:00:14.0-usb-0:1.3:1.3-event',
             '/dev/input/by-path/pci-0000:00:14.0-usb-0:2.3:1.3-event',
-            '/dev/input/by-path/pci-0000:00:14.0-usb-0:4.3:1.2-event',
             '/dev/input/by-path/pci-0000:00:14.0-usb-0:3.3:1.3-event'
     ]
 
     selector = DefaultSelector()
     state = {}
-
 
     for i in range(len(input_devices)):
         selector.register(
@@ -45,7 +44,7 @@ if __name__ == '__main__':
             i
         )
         state[i] = {'slots': {}, 'current': 0}
-
+    
     while True:
         for key, mask in selector.select():
             device = key.fileobj
@@ -70,6 +69,7 @@ if __name__ == '__main__':
                         if (v['x'] > 0 and v['y'] > 0):
                             send_event(num, v['touch'], k, v['x'], v['y'])
                         if v['touch'] == 0:
+                            send_event(num, v['touch'], k, v['x'], v['y'])
                             del(state[num]['slots'][k])
                 
                 if event.code == e.ABS_MT_SLOT:
