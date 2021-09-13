@@ -24,7 +24,7 @@ def send_event(num, touch, finger, x, y):
 
     string = "{},{},{},{}\n".format(touch, finger, xx, real_y)
     #ser.write(string.encode())
-    s.sendto(string, server)
+    s.sendto(string.encode('utf-8'), server)
     print(string)
 
 # main program
@@ -40,11 +40,11 @@ if __name__ == '__main__':
 
     # array of input devices resources
     input_devices = [
+            '/dev/input/by-path/pci-0000:00:14.0-usb-0:1.3:1.3-event',
             '/dev/input/by-path/pci-0000:00:14.0-usb-0:2.3:1.3-event',
-            '/dev/input/by-path/pci-0000:00:14.0-usb-0:4.3:1.2-event',
             '/dev/input/by-path/pci-0000:00:14.0-usb-0:3.3:1.3-event'
     ]
-
+    
     selector = DefaultSelector()
     state = {}
 
@@ -77,10 +77,12 @@ if __name__ == '__main__':
 
                 if event.type == e.EV_SYN and event.code == e.SYN_REPORT:
                     for k, v in list(state[num]['slots'].items()):
-                        if (v['x'] > 0 and v['y'] > 0):
+                        #if (v['x'] > 0 and v['y'] > 0):
+                        if v['touch'] == 1:
                             send_event(num, v['touch'], k, v['x'], v['y'])
                             
                         if v['touch'] == 0:
+                            send_event(num, v['touch'], k, v['x'], v['y'])
                             del(state[num]['slots'][k])
                 
                 if event.code == e.ABS_MT_SLOT:
@@ -90,7 +92,8 @@ if __name__ == '__main__':
                     if event.value > 0:
                         state[num]['slots'][c] = {'touch': 1, 'x': 0, 'y': 0}
                     else:
-                        state[num]['slots'][c] = {'touch': 0, 'x': 0, 'y': 0}
+                        #state[num]['slots'][c] = {'touch': 0, 'x': 0, 'y': 0}
+                        state[num]['slots'][c]['touch'] = 0
 
                 elif event.code == e.ABS_MT_POSITION_X:
                     if event.value > deadzone_left or event.value < deadzone_right:
