@@ -83,6 +83,27 @@ if __name__ == "__main__":
         def __init__(self, *args, **kw):
             # ensure the parent's __init__ is called
             super(MyFrame, self).__init__(*args, **kw)
+            panel = wx.Panel(self, -1)
+            basicLabel = wx.StaticText(panel, -1, "Basic Control:")
+            self.basicText = wx.TextCtrl(panel, -1, "", size=(175, -1))
+            pwdLabel = wx.StaticText(panel, -1, "Password:")
+            pwdText = wx.TextCtrl(panel, -1, "password", size=(175, -1),style=wx.TE_PASSWORD)
+            btn = wx.Button(panel, label='Save')
+            btn.Bind(wx.EVT_BUTTON, self.onSave)
+
+            sizer = wx.BoxSizer(wx.VERTICAL)
+
+            fsizer = wx.FlexGridSizer(cols=2, hgap=6, vgap=6)
+            fsizer.Add(basicLabel, 1, wx.ALIGN_CENTRE_VERTICAL)
+            fsizer.Add(self.basicText, 1)
+            fsizer.Add(pwdLabel, 1, wx.ALIGN_CENTRE_VERTICAL)
+            fsizer.Add(pwdText, 1)
+            
+            sizer.Add(fsizer)
+            fsizer.AddSpacer(0)
+            fsizer.Add(btn, 0, wx.ALIGN_RIGHT)
+
+            panel.SetSizer(sizer)
             self.Bind(wx.EVT_DPI_CHANGED, self.OnDPIChanged)
             self.Bind(wx.EVT_DISPLAY_CHANGED, self.OnDisplayChanged)
 
@@ -94,6 +115,9 @@ if __name__ == "__main__":
             print("height: ", ctypes.windll.user32.GetSystemMetrics(79))
             print("dpi:", ctypes.windll.user32.GetDpiForSystem())
             print_dpi()
+
+        def onSave(self, event):
+            print(self.basicText.Value)
 
     app = MyApp()
     frm = MyFrame(None, title='Hello World 2')
