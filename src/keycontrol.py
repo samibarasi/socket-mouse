@@ -9,6 +9,7 @@ def checkMemorizedKeys(str):
     switcher = {
         "abc": "http://barasi.gmbh",
         "cde": "http://nelsen-consulting.de"
+        "±123": "C:\Users\User\Desktop\Startpage.html"
     }
     return switcher.get(str, "")
 
