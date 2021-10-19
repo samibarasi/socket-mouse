@@ -8,8 +8,9 @@ def checkMemorizedKeys(str):
     print("store: {}".format(str))
     switcher = {
         "abc": "http://barasi.gmbh",
-        "cde": "http://nelsen-consulting.de"
-        "±123": "C:\Users\User\Desktop\Startpage.html"
+        "cde": "http://nelsen-consulting.de",
+        "nelsen": "http://nelsen-consulting.de",
+        "~Startpage": "C:/Users/User/Desktop/Startpage.html"
     }
     return switcher.get(str, "")
 
@@ -30,7 +31,7 @@ if __name__ == "__main__":
     keymemo = []
 
     # Open Chrome with default Page e.g. _blank
-    proc = Popen(["C:\Program Files\Google\Chrome\Application\chrome.exe", "-kiosk", "about:blank"])
+    #proc = Popen(["C:\Program Files\Google\Chrome\Application\chrome.exe", "-kiosk", "about:blank"])
 
     # The event listener will be running in this block
     with keyboard.Events() as events:
