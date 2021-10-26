@@ -1,0 +1,43 @@
+root@cube03:~/socket-mouse/src# python3 sc_tc.py
+Connected to host: 192.168.69.170 on port 4000
+My IP addresse is 192.168.69.74
+num: 0, code: ABS_MT_TRACKING_ID, value: 0
+Traceback (most recent call last):
+  File "sc_tc.py", line 96, in <module>
+    state[num]['slots'][c]['touch'] = 0
+KeyError: 0
+Exception ignored in: <function InputDevice.__del__ at 0x7fb1992bb700>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.8/dist-packages/evdev/device.py", line 160, in __del__
+  File "/usr/local/lib/python3.8/dist-packages/evdev/device.py", line 305, in close
+  File "/usr/local/lib/python3.8/dist-packages/evdev/eventio_async.py", line 55, in close
+  File "/usr/lib/python3.8/asyncio/events.py", line 722, in get_event_loop_policy
+  File "/usr/lib/python3.8/asyncio/events.py", line 715, in _init_event_loop_policy
+ImportError: sys.meta_path is None, Python is likely shutting down
+Exception ignored in: <function InputDevice.__del__ at 0x7fb1992bb700>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.8/dist-packages/evdev/device.py", line 160, in __del__
+  File "/usr/local/lib/python3.8/dist-packages/evdev/device.py", line 305, in close
+  File "/usr/local/lib/python3.8/dist-packages/evdev/eventio_async.py", line 55, in close
+  File "/usr/lib/python3.8/asyncio/events.py", line 722, in get_event_loop_policy
+  File "/usr/lib/python3.8/asyncio/events.py", line 715, in _init_event_loop_policy
+ImportError: sys.meta_path is None, Python is likely shutting down
+Exception ignored in: <function InputDevice.__del__ at 0x7fb1992bb700>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.8/dist-packages/evdev/device.py", line 160, in __del__
+  File "/usr/local/lib/python3.8/dist-packages/evdev/device.py", line 305, in close
+  File "/usr/local/lib/python3.8/dist-packages/evdev/eventio_async.py", line 55, in close
+  File "/usr/lib/python3.8/asyncio/events.py", line 722, in get_event_loop_policy
+  File "/usr/lib/python3.8/asyncio/events.py", line 715, in _init_event_loop_policy
+ImportError: sys.meta_path is None, Python is likely shutting down
+root@cube03:~/socket-mouse/src# python3 sc_tc.py
+Connected to host: 192.168.69.170 on port 4000
+My IP addresse is 192.168.69.74
+num: 0, code: ABS_MT_TRACKING_ID, value: 1
+num: 0, code: ABS_MT_POSITION_X, value: 15549
+num: 0, code: ABS_MT_POSITION_Y, value: 24690
+num: 0, code: ABS_X, value: 15549
+num: 0, code: ABS_Y, value: 24690
+num: 0, code: SYN_REPORT, value: 0
+1,0,1186,7535
+

@@ -49,57 +49,70 @@ if __name__ == '__main__':
     state = {}
 
     for i in range(len(input_devices)):
-        selector.register(
-            InputDevice(input_devices[i]),
-            EVENT_READ,
-            i
-        )
+        try:
+            selector.register(
+                InputDevice(input_devices[i]),
+                EVENT_READ,
+                i
+            )
+        except:
+            continue
         state[i] = {'slots': {}, 'current': 0}
+    
+    print(state)
 
     while True:
         for key, mask in selector.select():
             device = key.fileobj
             num = key.data
-            for event in device.read():
+            
+            try: 
+                for event in device.read():
 
-                code = None
-                if event.type == e.EV_SYN:
-                    code = e.SYN[event.code]
-                elif event.type == e.EV_ABS:
-                    code = e.ABS[event.code]
+                    code = None
+                    if event.type == e.EV_SYN:
+                        code = e.SYN[event.code]
+                    elif event.type == e.EV_ABS:
+                        code = e.ABS[event.code]
 
-                if code == None:
-                    continue
+                    if code == None:
+                        continue
 
-                print("num: {}, code: {}, value: {}".format(num, code, event.value))
+                    print("num: {}, code: {}, value: {}".format(num, code, event.value))
 
-                c = state[num]['current']
+                    c = state[num]['current']
 
-                if event.type == e.EV_SYN and event.code == e.SYN_REPORT:
-                    for k, v in list(state[num]['slots'].items()):
-                        #if (v['x'] > 0 and v['y'] > 0):
-                        if v['touch'] == 1:
-                            send_event(num, v['touch'], k, v['x'], v['y'])
-                            
-                        if v['touch'] == 0:
-                            send_event(num, v['touch'], k, v['x'], v['y'])
-                            del(state[num]['slots'][k])
-                
-                if event.code == e.ABS_MT_SLOT:
-                    state[num]['current'] = event.value
+                    if event.type == e.EV_SYN and event.code == e.SYN_REPORT:
+                        for k, v in list(state[num]['slots'].items()):
+                            #if (v['x'] > 0 and v['y'] > 0):
+                            if v['touch'] == 1:
+                                send_event(num, v['touch'], k, v['x'], v['y'])
+                                
+                            if v['touch'] == 0:
+                                send_event(num, v['touch'], k, v['x'], v['y'])
+                                del(state[num]['slots'][k])
+                    
+                    if event.code == e.ABS_MT_SLOT:
+                        state[num]['current'] = event.value
 
-                elif event.code == e.ABS_MT_TRACKING_ID:
-                    if event.value > 0:
-                        state[num]['slots'][c] = {'touch': 1, 'x': 0, 'y': 0}
-                    else:
-                        #state[num]['slots'][c] = {'touch': 0, 'x': 0, 'y': 0}
-                        state[num]['slots'][c]['touch'] = 0
+                    elif event.code == e.ABS_MT_TRACKING_ID:
+                        if event.value > 0:
+                            state[num]['slots'][c] = {'touch': 1, 'x': 0, 'y': 0}
+                        else:
+                            #state[num]['slots'][c] = {'touch': 0, 'x': 0, 'y': 0}
+                            state[num]['slots'][c]['touch'] = 0
 
-                elif event.code == e.ABS_MT_POSITION_X:
-                    if event.value > deadzone_left or event.value < deadzone_right:
-                        state[num]['slots'][c]['x'] = event.value
-                    else:
-                        print("Ghosttouch X:{}".format(event.value))
+                    elif event.code == e.ABS_MT_POSITION_X:
+                        if event.value > deadzone_left or event.value < deadzone_right:
+                            state[num]['slots'][c]['x'] = event.value
+                        else:
+                            print("Ghosttouch X:{}".format(event.value))
 
-                elif event.code == e.ABS_MT_POSITION_Y:
-                    state[num]['slots'][c]['y'] = event.value
+                    elif event.code == e.ABS_MT_POSITION_Y:
+                        state[num]['slots'][c]['y'] = event.value
+            except:
+                print("Cannot read device input. Skipped.")
+                continue
+
+        for i in range(len(input_devices)):
+                print(os.path.exists(i))
