@@ -1,19 +1,29 @@
 #!/usr/bin/env python3
-
+import csv
 from sys import flags
 import wx
 from wx.lib.newevent import NewEvent
-from wx.core import EVT_BUTTON, EVT_LISTBOX
+from subprocess import Popen
 
+from controls.keyctrl import EVT_KEYMEMO, KeyCtrl
 
-listItems = [
-    ('name1', 'key1', 'http://www.barasi.de'), 
-    ('name2', 'key2', 'http://www.nakedtoast.de'), 
-    ('name3', 'key3', 'http://www.nelsen-consulting.de')
-]
+proc_keyctrl = None
 
+# Read bookmarks from file
+bookmarks = []
+with open('bookmarks.csv', newline='') as csvfile:
+    bookmarkreader = csv.reader(csvfile, delimiter=';', quotechar='"')
+    for row in bookmarkreader:
+        bookmarks.append((row[0], row[1], row[2]))
+
+# Create Custom Events 
 BookmarkNewEvent, EVT_BOOKMARK_NEW = NewEvent()
+BookmarkSelectEvent, EVT_BOOKMARK_SELECT = NewEvent()
+FormSaveEvent, EVT_FORM_SAVE = NewEvent()
 
+def startKeycontrol():
+    global proc_keyctrl
+    proc_keyctrl = Popen(["python", "../keycontrol.py"])
 
 class PreferencesDialog(wx.Dialog):
 
@@ -64,6 +74,14 @@ class PreferencesDialog(wx.Dialog):
 class MyApp(wx.App):
     def OnInit(self):
         return super().OnInit()
+    
+    def OnExit(self):
+        if proc_keyctrl and proc_keyctrl.poll() is None:
+            print("keycontrol terminated")
+            proc_keyctrl.terminate()
+
+        print("App terminated.")
+        return super().OnExit()
 
 class MyPanel(wx.Panel):
     def __init__(self, *args, **kw):
@@ -107,7 +125,8 @@ class Panel1(wx.Panel):
 
 class Panel2(wx.Panel):
 
-    dirty = False
+    _dirty = False
+    _currentIndex = -1
     
     def __init__(self, *args, **kw):
         super(Panel2, self).__init__(*args, **kw)
@@ -117,22 +136,17 @@ class Panel2(wx.Panel):
         vbox = wx.BoxSizer(wx.VERTICAL)
 
         sb = wx.StaticBox(self, label='Bookmarks')
-        keyList = KeyList(sb, wx.ID_ANY)
-        self.keyForm = KeyForm(sb, wx.ID_ANY)
-        
-        # lc = wx.ListCtrl(sb, wx.ID_ANY, style=wx.LC_REPORT)
-        # lc.InsertColumn(0, 'name', wx.LIST_AUTOSIZE_USEHEADER)
-        # lc.InsertColumn(1, 'key', wx.LIST_AUTOSIZE_USEHEADER)
-        # for i in range(len(self.listItems)):
-        #     print(i, self.listItems[i][0], self.listItems[i][1])
-        #     lc.InsertItem(i, self.listItems[i][0])
-        #     lc.SetItem(i, 1, self.listItems[i][1])
+        self.bookmarkList = BookmarkList(sb, wx.ID_ANY)
+        self.bookmarkForm = BookmarkForm(sb, wx.ID_ANY)
+        self.bookmarkForm.Bind(wx.EVT_TEXT, self.OnFormChanged)
+        self.bookmarkForm.Bind(EVT_FORM_SAVE, self.OnSave)
 
-        keyList.Bind(EVT_BOOKMARK_NEW, self.OnBookmarkNew)
+        self.bookmarkList.Bind(EVT_BOOKMARK_NEW, self.OnBookmarkNew)
+        self.bookmarkList.Bind(EVT_BOOKMARK_SELECT, self.OnBookmarkSelect)
 
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        hbox.Add(keyList, flag=wx.EXPAND)
-        hbox.Add(self.keyForm, 1, flag=wx.EXPAND|wx.LEFT, border=10)
+        hbox.Add(self.bookmarkList, flag=wx.EXPAND)
+        hbox.Add(self.bookmarkForm, 1, flag=wx.EXPAND|wx.LEFT, border=10)
 
         sbs = wx.StaticBoxSizer(sb, orient=wx.VERTICAL)
         sbs.Add(hbox, flag=wx.EXPAND)
@@ -142,22 +156,45 @@ class Panel2(wx.Panel):
         self.SetSizer(vbox)
 
     def OnBookmarkNew(self, event):
-        self.dirty = True
-        print("New Bookmark event occurred with idx: {}".format(event.idx))
-        print("len: {}".format(len(listItems)))
-        self.keyForm.SetData(listItems[event.idx])
+        self.bookmarkForm.SetData(bookmarks[event.idx])
+        self._currentIndex = event.idx
 
-class KeyList(wx.Panel):
+    def OnBookmarkSelect(self, event):
+        self.bookmarkForm.SetData(bookmarks[event.idx])
+        self._currentIndex = event.idx
+
+    def OnFormChanged(self, event: wx.Event):
+        # Set panel state to dirty to indicate modification
+        self._dirty = True
+
+    def OnSave(self, event: wx.Event):
+        # Update bookmark list
+        bookmarks[self._currentIndex] = event.data
+        
+        # Updata list of bookmark names
+        names = [x[0] for x in bookmarks]
+        self.bookmarkList.SetList(names)
+
+        # TODO: Save to db?
+        # Write to bookmark csv file
+        with open('bookmarks.csv', 'w', newline='') as csvfile:
+            bookmarkwriter = csv.writer(csvfile, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            for item in bookmarks:
+                bookmarkwriter.writerow(item)
+        
+        self._dirty = False
+
+class BookmarkList(wx.Panel):
 
     ID_BTN_ADD = wx.NewIdRef()
     ID_BTN_DEL = wx.NewIdRef()
 
     def __init__(self, *args, **kw):
-        super(KeyList, self).__init__(*args, **kw)
+        super(BookmarkList, self).__init__(*args, **kw)
         self.InitUI()
 
     def InitUI(self):
-        listOfNames = [x[0] for x in listItems]
+        listOfNames = [x[0] for x in bookmarks]
 
         #self.SetBackgroundColour(wx.Colour("RED"))
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -167,8 +204,8 @@ class KeyList(wx.Panel):
         addButton = wx.BitmapButton(self, self.ID_BTN_ADD, wx.ArtProvider.GetBitmap(wx.ART_ADD_BOOKMARK))
         deleteButton = wx.BitmapButton(self, self.ID_BTN_DEL, wx.ArtProvider.GetBitmap(wx.ART_DEL_BOOKMARK))
 
-        addButton.Bind(EVT_BUTTON, self.OnButtonClicked, addButton)
-        self.lb.Bind(EVT_LISTBOX, self.OnListBoxSelected)
+        addButton.Bind(wx.EVT_BUTTON, self.OnButtonClicked, addButton)
+        self.lb.Bind(wx.EVT_LISTBOX, self.OnListBoxSelected)
         #deleteButton = wx.Button(self, label='-', size=(20, 20))
         hbox.Add(addButton)
         hbox.AddStretchSpacer()
@@ -178,9 +215,9 @@ class KeyList(wx.Panel):
         vbox.Add(hbox, flag=wx.TOP|wx.EXPAND, border=5)
         self.SetSizer(vbox)
 
-    def SetNames(self, names):
+    def SetList(self, list):
         self.lb.Clear()
-        self.lb.InsertItems(names, 0)
+        self.lb.InsertItems(list, 0)
 
     def OnButtonClicked(self, event):
         eid = event.GetId()
@@ -191,40 +228,53 @@ class KeyList(wx.Panel):
             self.DelBookmark()
 
     def NewBookmark(self):
-        listItems.append(('newItem', '', ''))
+        bookmarks.append(('newItem', '', ''))
         new_idx = self.lb.GetCount()
         self.lb.InsertItems(['newItem'], new_idx)
         self.lb.SetSelection(new_idx)
         evt = BookmarkNewEvent(idx=new_idx)
         wx.PostEvent(self, evt)
-        print(listItems)
 
     def OnListBoxSelected(self, event):
-        print(self.lb.GetSelection())
-        pass
+        new_idx = self.lb.GetSelection()
+        evt = BookmarkSelectEvent(idx=new_idx)
+        wx.PostEvent(self, evt)
 
     def DelBookmark(self):
         pass
 
-class KeyForm(wx.Panel):
+class BookmarkForm(wx.Panel):
+
+    _data = ('', '', '')
+
     def __init__(self, *args, **kw):
-        super(KeyForm, self).__init__(*args, **kw)
+        super(BookmarkForm, self).__init__(*args, **kw)
         self.InitUI()
 
     def InitUI(self):
         #self.SetBackgroundColour(wx.Colour("GREEN"))
-        vbox = wx.BoxSizer(wx.VERTICAL)
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
+
         nameLabel = wx.StaticText(self, label="Name:")
         self.nameInput = wx.TextCtrl(self, wx.ID_ANY)
+        self.nameInput.Bind(wx.EVT_TEXT, self.OnTextChanged)
+        self.nameInput.Bind(wx.EVT_CHAR, self.OnChar)
         keyLabel = wx.StaticText(self, label="Key:")
         self.keyInput = wx.TextCtrl(self, wx.ID_ANY)
         valueLabel = wx.StaticText(self, label="Value:")
         self.valueInput = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_MULTILINE | wx.TE_CHARWRAP)
-        saveBtn = wx.Button(self, wx.ID_ANY, label="Save")
-        resetBtn = wx.Button(self, wx.ID_ANY, label="Reset")
+        saveBtn = wx.Button(self, wx.ID_SAVE, label="Save")
+        resetBtn = wx.Button(self, wx.ID_RESET, label="Reset")
+
+        saveBtn.Bind(wx.EVT_BUTTON, self.OnButtonClicked, saveBtn)
+        resetBtn.Bind(wx.EVT_BUTTON, self.OnButtonClicked, resetBtn)
+
+        # Layout
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+
         hbox.Add(resetBtn)
         hbox.Add(saveBtn)
+
         vbox.Add(nameLabel)
         vbox.Add(self.nameInput)
         vbox.Add(keyLabel, flag=wx.TOP, border=10)
@@ -232,12 +282,43 @@ class KeyForm(wx.Panel):
         vbox.Add(valueLabel, flag=wx.TOP, border=10)
         vbox.Add(self.valueInput, 1, flag=wx.EXPAND)
         vbox.Add(hbox, 1, flag=wx.TOP|wx.ALIGN_RIGHT, border=10)
+
         self.SetSizer(vbox)
 
+    def GetData(self):
+        return self._data
+
     def SetData(self, data):
+        self._data = data
         self.nameInput.SetValue(data[0])
         self.keyInput.SetValue(data[1])
         self.valueInput.SetValue(data[2])
+    
+    def resetData(self):
+        self.nameInput.SetValue(self._data[0])
+        self.keyInput.SetValue(self._data[1])
+        self.valueInput.SetValue(self._data[2])
+
+    def OnButtonClicked(self, event: wx.Event):
+        eid = event.GetId()
+        if eid == wx.ID_SAVE:
+            self._data = (
+                self.nameInput.GetValue(),
+                self.keyInput.GetValue(),
+                self.valueInput.GetValue()
+            )
+            evt = FormSaveEvent(data=self.GetData())
+            wx.PostEvent(self, evt)
+        elif eid == wx.ID_RESET:
+            self.resetData()
+
+    def OnChar(self, event: wx.Event):
+        key_code = event.GetKeyCode()
+        if key_code != 32:
+            event.Skip()
+
+    def OnTextChanged(self, event: wx.Event):
+        event.Skip()
 
 class MyFrame(wx.Frame):
     ID_TOOL_REPORT = wx.NewIdRef()
@@ -298,8 +379,15 @@ class MyFrame(wx.Frame):
 
         # panel.SetSizer(sizer)
 
+        self.keyctrl = KeyCtrl(self, ("abc", "cde"))
+        self.keyctrl.start()
+        self.Bind(EVT_KEYMEMO, self.OnKeyMemo)
+
         # Top Panel
         self.top_panel = MyPanel(self)
+
+    def OnKeyMemo(self, e):
+        print("key memo: {}".format(e.memo))
 
     def OnToolBarClicked(self, e):
         eid = e.GetId()
@@ -329,6 +417,7 @@ class MyFrame(wx.Frame):
             self.Close()
 
 def main():
+    #startKeycontrol()
     app = MyApp()
     frm = MyFrame(None, title='Immersive Room Control', size=(640, 480))
     frm.Show()
