@@ -9,13 +9,6 @@ from controls.keyctrl import EVT_KEYMEMO, KeyCtrl
 
 proc_keyctrl = None
 
-# Read bookmarks from file
-bookmarks = []
-with open('bookmarks.csv', newline='') as csvfile:
-    bookmarkreader = csv.reader(csvfile, delimiter=';', quotechar='"')
-    for row in bookmarkreader:
-        bookmarks.append((row[0], row[1], row[2]))
-
 # Create Custom Events 
 BookmarkNewEvent, EVT_BOOKMARK_NEW = NewEvent()
 BookmarkSelectEvent, EVT_BOOKMARK_SELECT = NewEvent()
@@ -113,6 +106,7 @@ class Panel1(wx.Panel):
         dpiLabel = wx.StaticText(self, label="DPI:")
         dpiValue = wx.StaticText(self, MyFrame.ID_DPI, label="N/A")
 
+        # Layout
         fgs = wx.FlexGridSizer(cols=2, hgap=6, vgap=6)
         fgs.Add(resolutionLabel, 1, wx.ALIGN_RIGHT)
         fgs.Add(resolutionValue, 1)
@@ -144,6 +138,7 @@ class Panel2(wx.Panel):
         self.bookmarkList.Bind(EVT_BOOKMARK_NEW, self.OnBookmarkNew)
         self.bookmarkList.Bind(EVT_BOOKMARK_SELECT, self.OnBookmarkSelect)
 
+        # Layout
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         hbox.Add(self.bookmarkList, flag=wx.EXPAND)
         hbox.Add(self.bookmarkForm, 1, flag=wx.EXPAND|wx.LEFT, border=10)
@@ -360,34 +355,9 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnMenuClick, pmi)
         self.Bind(wx.EVT_MENU, self.OnMenuClick, qmi)
 
-        # Main Panel
-        # panel = wx.Panel(self, self.ID_PANEL_REPORT)
-        # resolutionLabel = wx.StaticText(panel, label="Resolution:")
-        # resolutionValue = wx.StaticText(panel, self.ID_RESOLUTION, label="N/A")
-        # dpiLabel = wx.StaticText(panel, label="DPI:")
-        # dpiValue = wx.StaticText(panel, self.ID_DPI, label="N/A")
-
-        # sizer = wx.BoxSizer(wx.VERTICAL)
-
-        # fsizer = wx.FlexGridSizer(cols=2, hgap=6, vgap=6)
-        # fsizer.Add(resolutionLabel, 1, wx.ALIGN_RIGHT)
-        # fsizer.Add(resolutionValue, 1)
-        # fsizer.Add(dpiLabel, 1, wx.ALIGN_RIGHT)
-        # fsizer.Add(dpiValue, 1)
-
-        # sizer.Add(fsizer, flag=wx.EXPAND|wx.ALL, border=10)
-
-        # panel.SetSizer(sizer)
-
-        self.keyctrl = KeyCtrl(self, ("abc", "cde"))
-        self.keyctrl.start()
-        self.Bind(EVT_KEYMEMO, self.OnKeyMemo)
-
         # Top Panel
         self.top_panel = MyPanel(self)
 
-    def OnKeyMemo(self, e):
-        print("key memo: {}".format(e.memo))
 
     def OnToolBarClicked(self, e):
         eid = e.GetId()
@@ -416,12 +386,50 @@ class MyFrame(wx.Frame):
             print("quit click")
             self.Close()
 
+def OnKeyMemo(e: wx.Event):
+    print("key memo: {}".format(e.memo))
+    OpenURL(GetUrlByKey(e.memo))
+    
+
+def GetUrlByKey(key):
+    for x in bookmarks:
+        if (x[1] == key):
+            return x[2]
+
+def OpenURL(url):
+    global proc
+
+    # Check if Chrome is still running and if yes, kill it :-D
+    if proc and proc.poll() is None:
+        proc.terminate()
+
+    # Open URL in Chrome
+    proc = Popen(["C:\Program Files\Google\Chrome\Application\chrome.exe", "-kiosk", url])
+
+
 def main():
+    global bookmarks
     #startKeycontrol()
     app = MyApp()
     frm = MyFrame(None, title='Immersive Room Control', size=(640, 480))
     frm.Show()
+    frm.Bind(EVT_KEYMEMO, OnKeyMemo)
+
+    # Read bookmarks from file
+    with open('bookmarks.csv', newline='') as csvfile:
+        bookmarkreader = csv.reader(csvfile, delimiter=';', quotechar='"')
+        for row in bookmarkreader:
+            bookmarks.append((row[0], row[1], row[2]))
+
+    # Key control
+    listOfKeys = [x[1] for x in bookmarks]
+    # because we use the event system from wx python, we have to provide a window object to the keyctrl class
+    keyctrl = KeyCtrl(frm, listOfKeys)
+    keyctrl.start()
+
     app.MainLoop()
 
 if __name__ == "__main__":
+    bookmarks = []
+    proc = None
     main()

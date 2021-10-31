@@ -22,10 +22,16 @@ class KeyCtrl(Thread):
         self.keys = keys
         self.wxWindow = wxWindow
         self.timeout = timeout
+        self.lock = RLock()
 
     def checkMemorizedKeys(self, str):
         print("store: {}".format(str))
-        return str in self.keys
+        with self.lock:
+            return str in self.keys
+
+    def SetKeys(self, keys):
+        with self.lock:
+            self.keys = keys
 
     def run(self):
         found = False
