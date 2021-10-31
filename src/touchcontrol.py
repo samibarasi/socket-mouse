@@ -71,7 +71,7 @@ if __name__ == '__main__':
                         if v['touch'] == 0:
                             send_event(num, v['touch'], k, v['x'], v['y'])
                             del(state[num]['slots'][k])
-                
+
                 if event.code == e.ABS_MT_SLOT:
                     state[num]['current'] = event.value
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
                         state[num]['slots'][c] = {'touch': 0, 'x': 0, 'y': 0}
 
                 elif event.code == e.ABS_MT_POSITION_X:
-                    if event.value > deadzone_left or event.value < deadzone_right:
+                    if event.value > deadzone_left and event.value < deadzone_right:
                         state[num]['slots'][c]['x'] = event.value
                     else:
                         print("Ghosttouch X:{}".format(event.value))
