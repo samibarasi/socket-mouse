@@ -131,7 +131,7 @@ if __name__ == '__main__':
                         state[num]['slots'][c]['touch'] = 0
 
                 elif event.code == e.ABS_MT_POSITION_X:
-                    if event.value > deadzone_left or event.value < deadzone_right:
+                    if event.value > deadzone_left and event.value < deadzone_right:
                         state[num]['slots'][c]['x'] = event.value
                     else:
                         print("Ghosttouch X:{}".format(event.value))
