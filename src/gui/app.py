@@ -14,10 +14,6 @@ BookmarkNewEvent, EVT_BOOKMARK_NEW = NewEvent()
 BookmarkSelectEvent, EVT_BOOKMARK_SELECT = NewEvent()
 FormSaveEvent, EVT_FORM_SAVE = NewEvent()
 
-def startKeycontrol():
-    global proc_keyctrl
-    proc_keyctrl = Popen(["python", "../keycontrol.py"])
-
 class PreferencesDialog(wx.Dialog):
 
     listItems = [
@@ -166,9 +162,12 @@ class Panel2(wx.Panel):
         # Update bookmark list
         bookmarks[self._currentIndex] = event.data
         
-        # Updata list of bookmark names
+        # Update list of bookmark names
         names = [x[0] for x in bookmarks]
         self.bookmarkList.SetList(names)
+        # Update list of keyctrl keys
+        keys = [x[1] for x in bookmarks]
+        keyctrl.SetKeys(keys)
 
         # TODO: Save to db?
         # Write to bookmark csv file
@@ -388,7 +387,11 @@ class MyFrame(wx.Frame):
 
 def OnKeyMemo(e: wx.Event):
     print("key memo: {}".format(e.memo))
-    OpenURL(GetUrlByKey(e.memo))
+    url = GetUrlByKey(e.memo)
+    if url:
+        OpenURL(url)
+    else:
+        raise ValueError('url for key not found!')
     
 
 def GetUrlByKey(key):
@@ -406,20 +409,18 @@ def OpenURL(url):
     # Open URL in Chrome
     proc = Popen(["C:\Program Files\Google\Chrome\Application\chrome.exe", "-kiosk", url])
 
-
 def main():
-    global bookmarks
-    #startKeycontrol()
-    app = MyApp()
-    frm = MyFrame(None, title='Immersive Room Control', size=(640, 480))
-    frm.Show()
-    frm.Bind(EVT_KEYMEMO, OnKeyMemo)
-
+    global bookmarks, keyctrl
     # Read bookmarks from file
     with open('bookmarks.csv', newline='') as csvfile:
         bookmarkreader = csv.reader(csvfile, delimiter=';', quotechar='"')
         for row in bookmarkreader:
             bookmarks.append((row[0], row[1], row[2]))
+    
+    app = MyApp()
+    frm = MyFrame(None, title='Immersive Room Control', size=(640, 480))
+    frm.Show()
+    frm.Bind(EVT_KEYMEMO, OnKeyMemo)
 
     # Key control
     listOfKeys = [x[1] for x in bookmarks]
@@ -430,6 +431,8 @@ def main():
     app.MainLoop()
 
 if __name__ == "__main__":
+    # define globals
     bookmarks = []
+    keyctrl = None
     proc = None
     main()
