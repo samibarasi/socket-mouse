@@ -2,6 +2,7 @@
 
 import socket
 import os
+from time import time
 from dotenv import load_dotenv
 from pynput import mouse
 from signal import signal, SIGINT
@@ -183,7 +184,7 @@ if __name__=='__main__':
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((host, port))
-    
+
     program = Process(target=Main, args=(s, width, height))
     # Tell Python to run the handler() function when SIGINT is recieved
     signal(SIGINT, handler)
@@ -195,8 +196,9 @@ if __name__=='__main__':
 
     while run_code:
         # run forever
+        time.sleep(1)
         pass
-    
+
     # Clean up
     program.terminate()
     s.close()

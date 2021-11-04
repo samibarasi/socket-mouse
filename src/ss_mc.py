@@ -51,7 +51,7 @@ def Main(s):
             pressed = touch
 
         timestamp = time.time()
-        
+    
         # if touch == 0:
         #     # on touchup (release)
         #     controller.click(mouse.Button.left, 1)
@@ -63,7 +63,7 @@ if __name__=='__main__':
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((host, port))
-    
+
     program = Process(target=Main, args=(s,))
     # Tell Python to run the handler() function when SIGINT is recieved
     signal(SIGINT, handler)
@@ -75,8 +75,9 @@ if __name__=='__main__':
 
     while run_code:
         # run forever
+        time.sleep(1)
         pass
-    
+
     # Clean up
     program.terminate()
     s.close()
