@@ -18,7 +18,7 @@ def openURL(url):
     global proc
 
     # Check if Chrome is still running and if yes, kill it :-D
-    if proc.poll() is None:
+    if proc and proc.poll() is None:
         proc.terminate()
 
     # Open URL in Chrome
@@ -29,6 +29,7 @@ if __name__ == "__main__":
     timeout = 2
     timestamp = time.time()
     keymemo = []
+    proc = None
 
     # Open Chrome with default Page e.g. _blank
     #proc = Popen(["C:\Program Files\Google\Chrome\Application\chrome.exe", "-kiosk", "about:blank"])

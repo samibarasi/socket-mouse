@@ -54,7 +54,6 @@ POINTER_FLAG_WHEEL=       0x00080000
 POINTER_FLAG_HWHEEL=      0x00100000
 POINTER_FLAG_CAPTURECHANGED=0x00200000
 
-
 #Structs Needed
 
 class POINTER_INFO(Structure):
@@ -76,7 +75,6 @@ class POINTER_INFO(Structure):
               ("ButtonChangeType",c_int)
               ]
 
-
 class POINTER_TOUCH_INFO(Structure):
     _fields_=[("pointerInfo",POINTER_INFO),
               ("touchFlags",c_int),
@@ -85,8 +83,6 @@ class POINTER_TOUCH_INFO(Structure):
               ("rcContactRaw",RECT),
               ("orientation", c_uint32),
               ("pressure", c_uint32)]
-
-
 
 #Initialize Pointer and Touch info
 
