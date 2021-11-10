@@ -1,18 +1,57 @@
 #!/usr/bin/env python3
-import csv
-from sys import flags
+import csv, ctypes, win32api
 import wx
+import wx.adv
 from wx.lib.newevent import NewEvent
 from subprocess import Popen
 
 from controls.keyctrl import EVT_KEYMEMO, KeyCtrl
+from controls.touchctrl import TouchCtrl
 
-proc_keyctrl = None
+MDT_EFFECTIVE_DPI = 0
 
 # Create Custom Events 
 BookmarkNewEvent, EVT_BOOKMARK_NEW = NewEvent()
 BookmarkSelectEvent, EVT_BOOKMARK_SELECT = NewEvent()
 FormSaveEvent, EVT_FORM_SAVE = NewEvent()
+
+def print_dpi():
+    shcore = ctypes.windll.shcore
+    monitors = win32api.EnumDisplayMonitors()
+    dpiX = ctypes.c_uint()
+    dpiY = ctypes.c_uint()
+    for i, monitor in enumerate(monitors):
+        shcore.GetDpiForMonitor(
+            monitor[0].handle,
+            MDT_EFFECTIVE_DPI,
+            ctypes.byref(dpiX),
+            ctypes.byref(dpiY)
+        )
+        print(
+            f"Monitor {i} (hmonitor: {monitor[0]}) = dpiX: {dpiX.value}, dpiY: {dpiY.value}"
+        )
+
+def getDim():
+    dim = []
+    shcore = ctypes.windll.shcore
+    monitors = win32api.EnumDisplayMonitors()
+    dpiX = ctypes.c_uint()
+    dpiY = ctypes.c_uint()
+    for i, monitor in enumerate(monitors):
+        shcore.GetDpiForMonitor(
+            monitor[0].handle,
+            MDT_EFFECTIVE_DPI,
+            ctypes.byref(dpiX),
+            ctypes.byref(dpiY)
+        )
+        dim.append({
+            "id": "Monitor {} ({})".format(i, monitor[0]),
+            "dpiX": dpiX.value,
+            "dpiY": dpiY.value,
+            "screenWidth": ctypes.windll.user32.GetSystemMetrics(78),
+            "screenHeight": ctypes.windll.user32.GetSystemMetrics(79)
+        })
+    return dim
 
 class PreferencesDialog(wx.Dialog):
 
@@ -62,14 +101,12 @@ class PreferencesDialog(wx.Dialog):
 
 class MyApp(wx.App):
     def OnInit(self):
+        splashScreen = MySplashScreen()
+        splashScreen.CenterOnScreen(wx.BOTH)
+        splashScreen.Show(True)
         return super().OnInit()
     
     def OnExit(self):
-        if proc_keyctrl and proc_keyctrl.poll() is None:
-            print("keycontrol terminated")
-            proc_keyctrl.terminate()
-
-        print("App terminated.")
         return super().OnExit()
 
 class MyPanel(wx.Panel):
@@ -85,29 +122,29 @@ class MyPanel(wx.Panel):
 
         for panel in self.panels:
             sizer.Add(panel, 1, wx.EXPAND)
-            panel.Hide()
+            if not isinstance(panel, Panel1): panel.Hide()
 
         self.SetSizer(sizer)
     
 class Panel1(wx.Panel):
     def __init__(self, *args, **kw):
         super(Panel1, self).__init__(*args, **kw)
-        self.SetBackgroundColour(wx.GREEN)
+        dim = getDim()
+        print(dim[0])
         self.title = wx.StaticText(self, label="Information:")
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.title, flag=wx.EXPAND|wx.ALL, border=10)
-       
         resolutionLabel = wx.StaticText(self, label="Resolution:")
-        resolutionValue = wx.StaticText(self, MyFrame.ID_RESOLUTION, label="N/A")
+        self.resolutionValue = wx.StaticText(self, MyFrame.ID_RESOLUTION, label="{} x {}".format(dim[0]['screenWidth'], dim[0]['screenHeight']))
         dpiLabel = wx.StaticText(self, label="DPI:")
-        dpiValue = wx.StaticText(self, MyFrame.ID_DPI, label="N/A")
+        self.dpiValue = wx.StaticText(self, MyFrame.ID_DPI, label="{} dpi".format(dim[0]['dpiX']))
 
         # Layout
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.title, flag=wx.EXPAND|wx.ALL, border=10)
         fgs = wx.FlexGridSizer(cols=2, hgap=6, vgap=6)
         fgs.Add(resolutionLabel, 1, wx.ALIGN_RIGHT)
-        fgs.Add(resolutionValue, 1)
+        fgs.Add(self.resolutionValue, 1, flag=wx.EXPAND)
         fgs.Add(dpiLabel, 1, wx.ALIGN_RIGHT)
-        fgs.Add(dpiValue, 1)
+        fgs.Add(self.dpiValue, 1, flag=wx.EXPAND)
 
         sizer.Add(fgs, flag=wx.EXPAND|wx.ALL, border=10)
 
@@ -314,6 +351,52 @@ class BookmarkForm(wx.Panel):
     def OnTextChanged(self, event: wx.Event):
         event.Skip()
 
+#---------------------------------------------------------------------------
+
+class MySplashScreen(wx.adv.SplashScreen):
+    """
+    Create a splash screen widget.
+    """
+    def __init__(self, parent=None):
+
+        #------------
+
+        # This is a recipe to a the screen.
+        # Modify the following variables as necessary.
+        bitmap = wx.Bitmap(name="images/holodeck.jpg", type=wx.BITMAP_TYPE_JPEG)
+        splash = wx.adv.SPLASH_CENTRE_ON_SCREEN | wx.adv.SPLASH_TIMEOUT
+        duration = 3000 # milliseconds
+
+        # Call the constructor with the above arguments
+        # in exactly the following order.
+        super(MySplashScreen, self).__init__(bitmap=bitmap,
+                                             splashStyle=splash,
+                                             milliseconds=duration,
+                                             parent=None,
+                                             id=-1,
+                                             pos=wx.DefaultPosition,
+                                             size=wx.DefaultSize,
+                                             style=wx.STAY_ON_TOP |
+                                                   wx.BORDER_NONE)
+
+        self.Bind(wx.EVT_CLOSE, self.OnExit)
+
+    #-----------------------------------------------------------------------
+
+    def OnExit(self, event):
+        """
+        ...
+        """
+
+        # The program will freeze without this line.
+        event.Skip()  # Make sure the default handler runs too...
+        self.Hide()
+
+        #------------
+
+        # MyFrame is the main frame.
+        frm.Show(True)
+
 class MyFrame(wx.Frame):
     ID_TOOL_REPORT = wx.NewIdRef()
     ID_TOOL_PREF = wx.NewIdRef()
@@ -354,6 +437,9 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnMenuClick, pmi)
         self.Bind(wx.EVT_MENU, self.OnMenuClick, qmi)
 
+        self.Bind(wx.EVT_DPI_CHANGED, self.OnDPIChanged)
+        self.Bind(wx.EVT_DISPLAY_CHANGED, self.OnDisplayChanged)
+
         # Top Panel
         self.top_panel = MyPanel(self)
 
@@ -385,6 +471,22 @@ class MyFrame(wx.Frame):
             print("quit click")
             self.Close()
 
+    def OnDPIChanged(self, event):
+        print("DPI change detected.")
+        self.OnDisplayChanged(event)
+
+    def OnDisplayChanged(self, event):
+        print("Resolution change detected.")
+        print("width: ", ctypes.windll.user32.GetSystemMetrics(78))
+        print("height: ", ctypes.windll.user32.GetSystemMetrics(79))
+        print("dpi: ", ctypes.windll.user32.GetDpiForSystem())
+        print_dpi()
+        dim = getDim()
+        touchctrl.update(dim)
+        panel:Panel1 = self.FindWindowById(self.ID_PANEL_REPORT)
+        panel.dpiValue.SetLabel("{} dpi".format(dim[0]['dpiX']))
+        panel.resolutionValue.SetLabel("{} x {}".format(dim[0]['screenWidth'], dim[0]['screenHeight']))
+
 def OnKeyMemo(e: wx.Event):
     print("key memo: {}".format(e.memo))
     url = GetUrlByKey(e.memo)
@@ -400,26 +502,43 @@ def GetUrlByKey(key):
             return x[2]
 
 def OpenURL(url):
-    global proc
+    global proc_chrome
 
     # Check if Chrome is still running and if yes, kill it :-D
-    if proc and proc.poll() is None:
-        proc.terminate()
+    if proc_chrome and proc_chrome.poll() is None:
+        proc_chrome.terminate()
 
     # Open URL in Chrome
-    proc = Popen(["C:\Program Files\Google\Chrome\Application\chrome.exe", "-kiosk", url])
+    proc_chrome = Popen(["C:\Program Files\Google\Chrome\Application\chrome.exe", "-kiosk", url])
 
 def main():
-    global bookmarks, keyctrl
+    global bookmarks, keyctrl, touchctrl, frm
+
+    # # Set DPI Awareness  (Windows 10 and 8)
+    # # the argument is the awareness level, which can be 0, 1 or 2:
+    # # for 1-to-1 pixel control I seem to need it to be non-zero (I'm using level 2)
+    errorCode = ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    if errorCode == 0:
+        awareness = ctypes.c_int()
+        awareness = ctypes.c_int()
+        ctypes.windll.shcore.GetProcessDpiAwareness(0, ctypes.byref(awareness))
+        print("successfully changed dpi awareness to {}".format(awareness.value))
+    else:
+        print("failed to change dpi awareness")
+
     # Read bookmarks from file
     with open('bookmarks.csv', newline='') as csvfile:
         bookmarkreader = csv.reader(csvfile, delimiter=';', quotechar='"')
         for row in bookmarkreader:
             bookmarks.append((row[0], row[1], row[2]))
     
-    app = MyApp()
+    app = MyApp(clearSigInt=False)
+
+    wx.Yield()
+
     frm = MyFrame(None, title='Immersive Room Control', size=(640, 480))
-    frm.Show()
+    frm.CenterOnScreen(wx.BOTH)
+    #frm.Show()
     frm.Bind(EVT_KEYMEMO, OnKeyMemo)
 
     # Key control
@@ -428,11 +547,21 @@ def main():
     keyctrl = KeyCtrl(frm, listOfKeys)
     keyctrl.start()
 
+    touchctrl = TouchCtrl(frm)
+    touchctrl.start()
+
     app.MainLoop()
 
 if __name__ == "__main__":
     # define globals
+    frm = None
     bookmarks = []
     keyctrl = None
-    proc = None
+    proc_chrome = None
+    proc_touchctrl = None
+    touchctrl = None
+    # Tell Python to run the handler() function when SIGINT is recieved
     main()
+    touchctrl.stop()
+    touchctrl.join()
+    print("App exit")

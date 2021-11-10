@@ -15,7 +15,6 @@ class KeyCtrl(Thread):
 
     _timestamp = time.time()
     _memo = []
-    _proc = None
 
     def __init__(self, wxWindow, keys=[], timeout=2):
         super(KeyCtrl, self).__init__()

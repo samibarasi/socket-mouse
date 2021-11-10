@@ -1,3 +1,4 @@
-__all__ = ["keyctrl"]
+__all__ = ["keyctrl", "touchctrl"]
 
 from . import keyctrl
+from . import touchctrl

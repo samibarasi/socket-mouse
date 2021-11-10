@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-import socket
-import os
-from time import time
+import socket, os, time
 from dotenv import load_dotenv
 from pynput import mouse
 from signal import signal, SIGINT
@@ -103,6 +101,7 @@ touchInfo=POINTER_TOUCH_INFO(pointerInfo=pointerInfo,
 
 
 def makeTouch(x,y,fingerRadius):
+    print("maketouch:", x, y, fingerRadius)
     touchInfo.pointerInfo.ptPixelLocation.x=x
     touchInfo.pointerInfo.ptPixelLocation.y=y
 
@@ -135,7 +134,7 @@ def makeTouch(x,y,fingerRadius):
     else:
         print("Pull Up Succeeded!")
 
-    return
+    print("\n")
 
 def handler(signal_received, frame):
     global run_code
@@ -157,16 +156,15 @@ def Main(s, width, height):
         data, addr = s.recvfrom(1024)
         data = data.decode('utf-8')
         event = tuple(map(int, data.split(',')))
-        print("Raw data", data)
         print("Message from: " + str(addr))
         print("From connected client: " + str(event))
+        print("Raw data", data)
         touch = event[0]
         posX = int(width / MAX * event[2])
         posY = int(height / MAX * event[3])
         #controller.position = (posX, posY)
         if touch == 0:
             # on touchup (release)
-            print(posX, posY, 5)
             makeTouch(posX, posY, 5)
             #controller.click(mouse.Button.left, 1)
 
