@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+"""
+This is a socket-client script for receiving events from multiple input devices and forwarding them via socket to a server.
+
+(C) 2021 Sami Barasi (Barasi GmbH), Munich, Germany
+Released under GNU Public License (GPL)
+email: sami@barasi.gmbh
+"""
+
 import os, socket, time
 from dotenv import load_dotenv
 load_dotenv()
@@ -17,6 +25,7 @@ print("My IP addresse is {}".format(s.getsockname()[0]))
 
 # function for sending the event to the server 
 def send_event(num, touch, finger, x, y):
+    """ sends input event to socket server """
     real_x = round(10000 / 0x7FFF * x)
     real_y = round(10000 / 0x7FFF * y)
     width = 10000 / monitors
@@ -29,6 +38,7 @@ def send_event(num, touch, finger, x, y):
 
 # function for checking device status
 def check_missing_devices():
+    """ checks if paths of missing devices are available """
     global missing_devices
     i = 0
     while i < len(missing_devices):
@@ -57,18 +67,22 @@ if __name__ == '__main__':
 
     #ser = serial.Serial('/dev/ttyUSB0', 115200)
 
-    # array of input devices resources
+    # array of input devices resources. never changes for the same computer.
     input_devices = [
             '/dev/input/by-path/pci-0000:00:14.0-usb-0:1.3:1.3-event',
             '/dev/input/by-path/pci-0000:00:14.0-usb-0:2.3:1.3-event',
             '/dev/input/by-path/pci-0000:00:14.0-usb-0:3.3:1.3-event'
     ]
 
+    # array of missing devices
     missing_devices = []
     
+    # File selector for reading values from input devices
     selector = DefaultSelector()
     state = {}
 
+    # loop over input devices and try to register them for later reading. 
+    # In case of an exeption the missing input will be saved in the missing input array 
     for i in range(len(input_devices)):
         try:
             selector.register(
@@ -84,19 +98,24 @@ if __name__ == '__main__':
     print(state)
 
     while True:
+        # make sure there are no missing input devices
         if len(missing_devices) > 0:
             check_missing_devices()
 
+        # retry to find missing imput device after 3 seconds
         if len(missing_devices) > 0:
             time.sleep(3)
             continue
 
+        # collect values from input devices
         for key, mask in selector.select():
             device = key.fileobj
+            # set device number
             num = key.data
             
+            # read device values
             for event in device.read():
-
+                
                 code = None
                 if event.type == e.EV_SYN:
                     code = e.SYN[event.code]
@@ -110,6 +129,7 @@ if __name__ == '__main__':
 
                 c = state[num]['current']
 
+                # touch event report
                 if event.type == e.EV_SYN and event.code == e.SYN_REPORT:
                     for k, v in list(state[num]['slots'].items()):
                         #if (v['x'] > 0 and v['y'] > 0):
@@ -120,22 +140,33 @@ if __name__ == '__main__':
                             send_event(num, v['touch'], k, v['x'], v['y'])
                             del(state[num]['slots'][k])
 
+                # touch event slot number 
                 if event.code == e.ABS_MT_SLOT:
+                    # set current to slot number
                     state[num]['current'] = event.value
 
+                # touch event tracking id. tracking id > 0 means touch down.
                 elif event.code == e.ABS_MT_TRACKING_ID:
+                    # check if touch is down or up
                     if event.value > 0:
+                        # touch is down
                         state[num]['slots'][c] = {'touch': 1, 'x': 0, 'y': 0}
                     else:
+                        # touch is up
                         #state[num]['slots'][c] = {'touch': 0, 'x': 0, 'y': 0}
+                        # TODO: possible bug, sometimes script fails because of missing property touch, but why?
+                        # See error message for details: debug/sporadic-error.txt
                         state[num]['slots'][c]['touch'] = 0
 
+                # touch event x-position
                 elif event.code == e.ABS_MT_POSITION_X:
+                    # make sure x-position is not in the deadzone eg. ghost touches
                     if event.value > deadzone_left and event.value < deadzone_right:
                         state[num]['slots'][c]['x'] = event.value
                     else:
                         print("Ghosttouch X:{}".format(event.value))
 
+                # touch event y-position
                 elif event.code == e.ABS_MT_POSITION_Y:
                     state[num]['slots'][c]['y'] = event.value
 

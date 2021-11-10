@@ -131,7 +131,9 @@ class Panel1(wx.Panel):
         super(Panel1, self).__init__(*args, **kw)
         dim = getDim()
         print(dim[0])
-        self.title = wx.StaticText(self, label="Information:")
+        self.title = wx.StaticText(self, label="Anzeige")
+        font = wx.Font(18, wx.DECORATIVE, wx.NORMAL, wx.BOLD)
+        self.title.SetFont(font)
         resolutionLabel = wx.StaticText(self, label="Resolution:")
         self.resolutionValue = wx.StaticText(self, MyFrame.ID_RESOLUTION, label="{} x {}".format(dim[0]['screenWidth'], dim[0]['screenHeight']))
         dpiLabel = wx.StaticText(self, label="DPI:")
@@ -160,9 +162,12 @@ class Panel2(wx.Panel):
         self.InitUI()
 
     def InitUI(self):
-        vbox = wx.BoxSizer(wx.VERTICAL)
+        self.title = wx.StaticText(self, label="Bookmarks")
+        font = wx.Font(18, wx.DECORATIVE, wx.NORMAL, wx.BOLD)
+        self.title.SetFont(font)
 
-        sb = wx.StaticBox(self, label='Bookmarks')
+
+        sb = wx.StaticBox(self, label='Liste bearbeiten')
         self.bookmarkList = BookmarkList(sb, wx.ID_ANY)
         self.bookmarkForm = BookmarkForm(sb, wx.ID_ANY)
         self.bookmarkForm.Bind(wx.EVT_TEXT, self.OnFormChanged)
@@ -172,13 +177,14 @@ class Panel2(wx.Panel):
         self.bookmarkList.Bind(EVT_BOOKMARK_SELECT, self.OnBookmarkSelect)
 
         # Layout
+        vbox = wx.BoxSizer(wx.VERTICAL)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         hbox.Add(self.bookmarkList, flag=wx.EXPAND)
         hbox.Add(self.bookmarkForm, 1, flag=wx.EXPAND|wx.LEFT, border=10)
 
         sbs = wx.StaticBoxSizer(sb, orient=wx.VERTICAL)
         sbs.Add(hbox, flag=wx.EXPAND)
-
+        vbox.Add(self.title, flag=wx.EXPAND|wx.ALL, border=10)
         vbox.Add(sbs, proportion=1, flag=wx.ALL|wx.EXPAND, border=5)
 
         self.SetSizer(vbox)
