@@ -132,8 +132,8 @@ if __name__ == '__main__':
                 # touch event report
                 if event.type == e.EV_SYN and event.code == e.SYN_REPORT:
                     for k, v in list(state[num]['slots'].items()):
-                        #if (v['x'] > 0 and v['y'] > 0):
-                        if v['touch'] == 1:
+                        if (v['x'] > 0 and v['y'] > 0):
+                        #if v['touch'] == 1:
                             send_event(num, v['touch'], k, v['x'], v['y'])
 
                         if v['touch'] == 0:
@@ -153,10 +153,10 @@ if __name__ == '__main__':
                         state[num]['slots'][c] = {'touch': 1, 'x': 0, 'y': 0}
                     else:
                         # touch is up
-                        #state[num]['slots'][c] = {'touch': 0, 'x': 0, 'y': 0}
+                        state[num]['slots'][c] = {'touch': 0, 'x': 0, 'y': 0}
                         # TODO: possible bug, sometimes script fails because of missing property touch, but why?
                         # See error message for details: debug/sporadic-error.txt
-                        state[num]['slots'][c]['touch'] = 0
+                        #state[num]['slots'][c]['touch'] = 0
 
                 # touch event x-position
                 elif event.code == e.ABS_MT_POSITION_X:
@@ -164,6 +164,7 @@ if __name__ == '__main__':
                     if event.value > deadzone_left and event.value < deadzone_right:
                         state[num]['slots'][c]['x'] = event.value
                     else:
+                        state[num]['slots'][c] = {'touch': -1, 'x': 0, 'y': 0}
                         print("Ghosttouch X:{}".format(event.value))
 
                 # touch event y-position
