@@ -14,6 +14,8 @@ load_dotenv()
 from evdev import InputDevice, util, ecodes as e
 from selectors import DefaultSelector, EVENT_READ
 
+version = "1.0.0"
+
 # Socket
 host = os.environ.get("HOST_IP")
 port = int(os.environ.get("HOST_PORT"))
@@ -59,6 +61,7 @@ def check_missing_devices():
 # main program
 if __name__ == '__main__':
 
+    print("Starting sc_tc.py version:", version)
     monitors = 4
     threshold = 0.02
 
@@ -93,7 +96,12 @@ if __name__ == '__main__':
         except:
             missing_devices.append(i)
             continue
-        state[i] = {'slots': {}, 'current': 0}
+
+        # Initialize state of device
+        state[i] = {
+            'slots': {}, 
+            'current': 0
+        }
     
     print(state)
 
@@ -126,34 +134,38 @@ if __name__ == '__main__':
                     continue
 
                 print("num: {}, code: {}, value: {}".format(num, code, event.value))
-
+                # set current slot in state
                 c = state[num]['current']
 
-                # touch event report
+                state[num]['slots'].setdefault(c, {'touch': 0, 'x': 0, 'y': 0, 'ghost': 0})
+                # event report and send
                 if event.type == e.EV_SYN and event.code == e.SYN_REPORT:
                     for k, v in list(state[num]['slots'].items()):
-                        if (v['x'] > 0 and v['y'] > 0):
-                        #if v['touch'] == 1:
+                        if v['ghost'] == 1:
+                            continue
+                        #if (v['x'] > 0 and v['y'] > 0):
+                        if v['touch'] == 1:
                             send_event(num, v['touch'], k, v['x'], v['y'])
 
                         if v['touch'] == 0:
                             send_event(num, v['touch'], k, v['x'], v['y'])
                             del(state[num]['slots'][k])
 
-                # touch event slot number 
+                # event slot number 
                 if event.code == e.ABS_MT_SLOT:
-                    # set current to slot number
+                    # change to slot number
                     state[num]['current'] = event.value
 
-                # touch event tracking id. tracking id > 0 means touch down.
+                # event tracking. event.value > 0 means touch down.
                 elif event.code == e.ABS_MT_TRACKING_ID:
+                     
                     # check if touch is down or up
                     if event.value > 0:
                         # touch is down
-                        state[num]['slots'][c] = {'touch': 1, 'x': 0, 'y': 0}
+                        state[num]['slots'][c]['touch'] = 1 
                     else:
                         # touch is up
-                        state[num]['slots'][c] = {'touch': 0, 'x': 0, 'y': 0}
+                        state[num]['slots'][c]['touch'] = 0 
                         # TODO: possible bug, sometimes script fails because of missing property touch, but why?
                         # See error message for details: debug/sporadic-error.txt
                         #state[num]['slots'][c]['touch'] = 0
@@ -163,8 +175,10 @@ if __name__ == '__main__':
                     # make sure x-position is not in the deadzone eg. ghost touches
                     if event.value > deadzone_left and event.value < deadzone_right:
                         state[num]['slots'][c]['x'] = event.value
+                        state[num]['slots'][c]['ghost'] = 0 
+
                     else:
-                        state[num]['slots'][c] = {'touch': -1, 'x': 0, 'y': 0}
+                        state[num]['slots'][c]['ghost'] = 1
                         print("Ghosttouch X:{}".format(event.value))
 
                 # touch event y-position
