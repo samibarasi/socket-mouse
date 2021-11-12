@@ -62,9 +62,9 @@ def check_missing_devices():
 if __name__ == '__main__':
 
     print("Starting sc_tc.py version:", version)
-    monitors = 4
+    monitors = 4i
+    # deadzone
     threshold = 0.02
-
     deadzone_left = round(0x7FFF * threshold)
     deadzone_right = 0x7FFF - deadzone_left
 
@@ -166,11 +166,8 @@ if __name__ == '__main__':
                     else:
                         # touch is up
                         state[num]['slots'][c]['touch'] = 0 
-                        # TODO: possible bug, sometimes script fails because of missing property touch, but why?
-                        # See error message for details: debug/sporadic-error.txt
-                        #state[num]['slots'][c]['touch'] = 0
 
-                # touch event x-position
+                # event x-position
                 elif event.code == e.ABS_MT_POSITION_X:
                     # make sure x-position is not in the deadzone eg. ghost touches
                     if event.value > deadzone_left and event.value < deadzone_right:
@@ -181,7 +178,7 @@ if __name__ == '__main__':
                         state[num]['slots'][c]['ghost'] = 1
                         print("Ghosttouch X:{}".format(event.value))
 
-                # touch event y-position
+                # event y-position
                 elif event.code == e.ABS_MT_POSITION_Y:
                     state[num]['slots'][c]['y'] = event.value
 
