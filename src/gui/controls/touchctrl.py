@@ -147,6 +147,8 @@ def handler(signal_received, frame):
 
 
 def Main(s):
+    posX = 0
+    posY = 0
     #controller = mouse.Controller()
      # Query DPI Awareness (Windows 10 and 8)
     windll.shcore.SetProcessDpiAwareness(2)
@@ -163,8 +165,9 @@ def Main(s):
         print("From connected client: " + str(event))
         print("Raw data", data)
         touch = event[0]
-        posX = int(screenWidth / MAX * event[2])
-        posY = int(screenHeight / MAX * event[3])
+        if touch == 1:
+            posX = int(screenWidth / MAX * event[2])
+            posY = int(screenHeight / MAX * event[3])
         #controller.position = (posX, posY)
         if touch == 0:
             # on touchup (release)
