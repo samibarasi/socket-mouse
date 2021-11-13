@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 import csv, ctypes, win32api
+import os
 import wx
 import wx.adv
+from dotenv import load_dotenv
+from wx.core import EVT_CLOSE, Event
 from wx.lib.newevent import NewEvent
 from subprocess import Popen
 
 from controls.keyctrl import EVT_KEYMEMO, KeyCtrl
 from controls.touchctrl import TouchCtrl
+
+load_dotenv()
 
 MDT_EFFECTIVE_DPI = 0
 
@@ -107,6 +112,7 @@ class MyApp(wx.App):
         return super().OnInit()
     
     def OnExit(self):
+        print("exit")
         return super().OnExit()
 
 class MyPanel(wx.Panel):
@@ -125,6 +131,12 @@ class MyPanel(wx.Panel):
             if not isinstance(panel, Panel1): panel.Hide()
 
         self.SetSizer(sizer)
+
+class AuthPanel(wx.Panel):
+    def __init__(self, *args, **kw):
+        super(AuthPanel, self).__init__(*args, **kw)
+        passwordLabel = wx.StaticText(self, label="Passwort:")
+        self.passwordInput = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_PASSWORD)
     
 class Panel1(wx.Panel):
     def __init__(self, *args, **kw):
@@ -134,7 +146,7 @@ class Panel1(wx.Panel):
         self.title = wx.StaticText(self, label="Anzeige")
         font = wx.Font(18, wx.DECORATIVE, wx.NORMAL, wx.BOLD)
         self.title.SetFont(font)
-        resolutionLabel = wx.StaticText(self, label="Resolution:")
+        resolutionLabel = wx.StaticText(self, label="Auflösung:")
         self.resolutionValue = wx.StaticText(self, MyFrame.ID_RESOLUTION, label="{} x {}".format(dim[0]['screenWidth'], dim[0]['screenHeight']))
         dpiLabel = wx.StaticText(self, label="DPI:")
         self.dpiValue = wx.StaticText(self, MyFrame.ID_DPI, label="{} dpi".format(dim[0]['dpiX']))
@@ -446,9 +458,30 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_DPI_CHANGED, self.OnDPIChanged)
         self.Bind(wx.EVT_DISPLAY_CHANGED, self.OnDisplayChanged)
 
+        self.Bind(wx.EVT_CLOSE, self.OnExit)
+
         # Top Panel
         self.top_panel = MyPanel(self)
 
+        # Password Dialog
+        self.passwordDialog = wx.PasswordEntryDialog(self, "Bitte geben Sie das Admin Passwort ein:",
+            caption=wx.GetPasswordFromUserPromptStr, defaultValue="",
+            style=wx.TextEntryDialogStyle, pos=wx.DefaultPosition)
+    
+    def OnExit(self, e: Event):
+        self.passwordDialog.Destroy()
+        e.Skip()
+
+    def isAuth(self, wxWindow):
+        if authorized:
+            return wxWindow
+        else:
+            if self.passwordDialog.ShowModal() == wx.ID_OK:
+                print(self.passwordDialog.GetValue(), password)
+                if self.passwordDialog.GetValue() == password:
+                    wxWindow = self.FindWindowById(self.ID_PANEL_PREF)
+                else:
+                    wxWindow = None
 
     def OnToolBarClicked(self, e):
         eid = e.GetId()
@@ -456,9 +489,12 @@ class MyFrame(wx.Frame):
         if eid == self.ID_TOOL_REPORT:
             panel = self.FindWindowById(self.ID_PANEL_REPORT)
         elif eid == self.ID_TOOL_PREF:
-            panel = self.FindWindowById(self.ID_PANEL_PREF)
-
+            panel = self.isAuth(self.FindWindowById(self.ID_PANEL_PREF))
+           
         print(panel)
+        if panel == None:
+            return
+        
         for p in self.top_panel.panels:
             p.Hide()
         panel.Show()
@@ -560,7 +596,8 @@ def main():
 
 if __name__ == "__main__":
     # define globals
-    frm = None
+    authorized = False
+    password = os.environ.get("PASSWORD", '')
     bookmarks = []
     keyctrl = None
     proc_chrome = None
