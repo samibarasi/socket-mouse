@@ -16,15 +16,6 @@ from selectors import DefaultSelector, EVENT_READ
 
 version = "1.0.0"
 
-# Socket
-host = os.environ.get("HOST_IP")
-port = int(os.environ.get("HOST_PORT"))
-server = (host, port)
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(server)
-print("Connected to host: {0} on port {1}".format(host, port))
-print("My IP addresse is {}".format(s.getsockname()[0]))
-
 # function for sending the event to the server 
 def send_event(num, touch, finger, x, y):
     """ sends input event to socket server """
@@ -62,22 +53,32 @@ def check_missing_devices():
 if __name__ == '__main__':
 
     print("Starting sc_tc.py version:", version)
-    monitors = 4i
-    # deadzone
+
+    # Number of display monitors
+    monitors = int(os.environ.get("MONITORS", 4))
+
+    # Threshold and Deadzones
     threshold = 0.02
     deadzone_left = round(0x7FFF * threshold)
     deadzone_right = 0x7FFF - deadzone_left
 
-    #ser = serial.Serial('/dev/ttyUSB0', 115200)
+    # Socket
+    host = os.environ.get("HOST_IP")
+    port = int(os.environ.get("HOST_PORT"))
+    server = (host, port)
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(server)
+    print("Connected to host: {0} on port {1}".format(host, port))
+    print("My IP addresse is {}".format(s.getsockname()[0]))
 
-    # array of input devices resources. never changes for the same computer.
+    # Array of input devices.These pathes never changes for the same computer.
     input_devices = [
             '/dev/input/by-path/pci-0000:00:14.0-usb-0:1.3:1.3-event',
             '/dev/input/by-path/pci-0000:00:14.0-usb-0:2.3:1.3-event',
             '/dev/input/by-path/pci-0000:00:14.0-usb-0:3.3:1.3-event'
     ]
 
-    # array of missing devices
+    # Array of missing devices
     missing_devices = []
     
     # File selector for reading values from input devices
@@ -143,7 +144,7 @@ if __name__ == '__main__':
                     for k, v in list(state[num]['slots'].items()):
                         if v['ghost'] == 1:
                             continue
-                        #if (v['x'] > 0 and v['y'] > 0):
+                        
                         if v['touch'] == 1:
                             send_event(num, v['touch'], k, v['x'], v['y'])
 
@@ -173,7 +174,6 @@ if __name__ == '__main__':
                     if event.value > deadzone_left and event.value < deadzone_right:
                         state[num]['slots'][c]['x'] = event.value
                         state[num]['slots'][c]['ghost'] = 0 
-
                     else:
                         state[num]['slots'][c]['ghost'] = 1
                         print("Ghosttouch X:{}".format(event.value))
