@@ -1,0 +1,47 @@
+<html>
+<head>
+<style>
+	body, html {
+		height: 100%
+	}
+	body {
+		position: relative;
+		margin: 0;
+		width: 100%;
+	}
+        #btn {
+		position: absolute;
+		top: 50%;
+		left: 37.5%;
+		transform: translate(-50%, -50%);
+        }
+        #btn.touch {
+                background-color: red;
+	}
+</style>
+</head>
+<body>
+        <button id="btn">touch me
+        </button>
+        <script>
+        var btn = document.getElementById("btn")
+        btn.addEventListener("touchmove", function(e) {
+                //btn.classList.add("touch")
+		console.log(e);
+        });
+        btn.addEventListener("touchcancel", function(e) {
+                //btn.classList.add("touch")
+		console.log(e);
+        });
+        btn.addEventListener("touchstart", function(e) {
+                //btn.classList.add("touch")
+		console.log(e);
+        });
+        btn.addEventListener("touchend", function(e) {
+                //btn.classList.remove("touch")
+		console.log(e);
+        });
+        </script>
+</body>
+</html>
+
