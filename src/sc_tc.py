@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-This is a socket-client script for receiving events from multiple input devices and forwarding them via socket to a server.
+This script is for reading events from multiple input devices and forwarding them via socket to a connected server.
 
 (C) 2021 Sami Barasi (Barasi GmbH), Munich, Germany
 Released under GNU Public License (GPL)

@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+"""
+This script is for receiving events via socket and creating touch events on the host system (windows only).
+
+(C) 2021 Sami Barasi (Barasi GmbH), Munich, Germany
+Released under GNU Public License (GPL)
+email: sami@barasi.gmbh
+"""
+
 import socket, os, time
 from dotenv import load_dotenv
 from pynput import mouse
