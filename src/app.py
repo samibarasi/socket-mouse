@@ -599,11 +599,9 @@ if __name__ == "__main__":
     authorized = False
     password = os.environ.get("PASSWORD", '')
     bookmarks = []
+    touchctrl = None
     keyctrl = None
     proc_chrome = None
-    proc_touchctrl = None
-    touchctrl = None
-    # Tell Python to run the handler() function when SIGINT is recieved
     main()
     touchctrl.stop()
     touchctrl.join()
