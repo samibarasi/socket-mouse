@@ -10,7 +10,9 @@ def checkMemorizedKeys(str):
         "abc": "http://barasi.gmbh",
         "cde": "http://nelsen-consulting.de",
         "nelsen": "http://nelsen-consulting.de",
-        "~Startpage": "C:/Users/User/Desktop/Startpage.html"
+        "~Startpage": "C:/Users/User/Desktop/Startpage.html",
+        "~Martin": "C:/Users/User/Desktop/Martin.html",
+        "~Mehmet": "C:/Users/User/Desktop/Mehmet.html"
     }
     return switcher.get(str, "")
 
