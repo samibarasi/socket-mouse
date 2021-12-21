@@ -387,15 +387,17 @@ class MySplashScreen(wx.adv.SplashScreen):
 
         # Call the constructor with the above arguments
         # in exactly the following order.
-        super(MySplashScreen, self).__init__(bitmap=bitmap,
-                                             splashStyle=splash,
-                                             milliseconds=duration,
-                                             parent=None,
-                                             id=-1,
-                                             pos=wx.DefaultPosition,
-                                             size=wx.DefaultSize,
-                                             style=wx.STAY_ON_TOP |
-                                                   wx.BORDER_NONE)
+        super(MySplashScreen, self).__init__(
+            bitmap=bitmap,
+            splashStyle=splash,
+            milliseconds=duration,
+            parent=None,
+            id=-1,
+            pos=wx.DefaultPosition,
+            size=wx.DefaultSize,
+            style=wx.STAY_ON_TOP |
+                wx.BORDER_NONE
+        )
 
         self.Bind(wx.EVT_CLOSE, self.OnExit)
 
@@ -544,14 +546,14 @@ def GetUrlByKey(key):
             return x[2]
 
 def OpenURL(url):
-    global proc_chrome
+    global proc_chrome, chrome
 
     # Check if Chrome is still running and if yes, kill it :-D
     if proc_chrome and proc_chrome.poll() is None:
         proc_chrome.terminate()
 
     # Open URL in Chrome
-    proc_chrome = Popen(["C:\Program Files\Google\Chrome\Application\chrome.exe", "-kiosk", url])
+    proc_chrome = Popen([chrome, "-kiosk", url])
 
 def main():
     global bookmarks, keyctrl, touchctrl, frm
@@ -598,6 +600,7 @@ if __name__ == "__main__":
     # define globals
     authorized = False
     password = os.environ.get("PASSWORD", '')
+    chrome = os.environ.get("CHROME", 'C:\Program Files\Google\Chrome\Application\chrome.exe')
     bookmarks = []
     keyctrl = None
     proc_chrome = None
